@@ -1,3 +1,4 @@
+# SuccSeed is a plant collection and care journal built for hobbyist growers to document plant growth, care routines, photos, and seasonal changes over time.
 # React + TypeScript + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
