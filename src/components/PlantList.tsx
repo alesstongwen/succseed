@@ -73,14 +73,14 @@ export default function PlantList({ userId, userName, onSelect, onSignOut }: Pro
     return () => { supabase.removeChannel(sub); };
   }, [loadPlants]);
 
-  const greeting = userName ? `Hi, ${userName.split(' ')[0]} 👋` : 'Your plants 🌱';
+  const greeting = userName ? `Hi, ${userName.split(' ')[0]}!` : 'Your plants';
 
   return (
     <div className="min-h-screen bg-stone-50">
       {/* Header */}
       <div className="bg-white border-b border-stone-100 px-4 py-4 flex items-center justify-between sticky top-0 z-10">
         <div>
-          <h1 className="text-xl font-bold text-stone-800">🌱 Succseed</h1>
+          <h1 className="text-xl font-bold text-stone-800">Succseed</h1>
           <p className="text-xs text-stone-400">{greeting}</p>
         </div>
         <button
@@ -94,11 +94,11 @@ export default function PlantList({ userId, userName, onSelect, onSignOut }: Pro
       <div className="p-4 max-w-lg mx-auto">
         {loading ? (
           <div className="flex justify-center py-16">
-            <span className="text-4xl animate-pulse">🌱</span>
+            <div className="w-8 h-8 border-4 border-leaf-600 border-t-transparent rounded-full animate-spin" />
           </div>
         ) : plants.length === 0 ? (
           <div className="text-center py-16">
-            <div className="text-6xl mb-4">🪴</div>
+            <div className="text-6xl mb-4 text-leaf-300">✿</div>
             <p className="text-stone-500 font-medium">No plants yet</p>
             <p className="text-stone-400 text-sm mt-1">Add your first plant to get started</p>
           </div>
