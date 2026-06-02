@@ -21,7 +21,7 @@ export default function PlantCard({ plant, lastWatering, onClick }: Props) {
         {plant.photo_url ? (
           <img src={plant.photo_url} alt={displayName} className="w-full h-full object-cover" />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-5xl">🪴</div>
+          <div className="w-full h-full flex items-center justify-center text-5xl emoji">🪴</div>
         )}
         {sharedCount > 1 && (
           <div className="absolute top-2 right-2 bg-white/90 rounded-full px-2 py-0.5 text-xs text-stone-600 flex items-center gap-1">
