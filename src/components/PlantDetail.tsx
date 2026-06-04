@@ -140,6 +140,21 @@ export default function PlantDetail({ plantId, userId, onBack, onDeleted }: Prop
     setLogSaving(false);
   }
 
+  async function deleteWateringLog(id: string) {
+    await supabase.from('watering_logs').delete().eq('id', id);
+    await loadLogs();
+  }
+
+  async function deleteFertilizeLog(id: string) {
+    await supabase.from('fertilize_logs').delete().eq('id', id);
+    await loadLogs();
+  }
+
+  async function deleteCareLog(id: string) {
+    await supabase.from('care_logs').delete().eq('id', id);
+    await loadLogs();
+  }
+
   async function deletePlant() {
     if (!confirm('Delete this plant? This cannot be undone.')) return;
     await supabase.from('plants').delete().eq('id', plantId);
@@ -333,11 +348,14 @@ export default function PlantDetail({ plantId, userId, onBack, onDeleted }: Prop
                     <span className="text-sm font-medium text-stone-700">
                       {format(new Date(log.watered_at), 'MMM d, yyyy')}
                     </span>
-                    {log.amount_ml && (
-                      <span className="text-xs text-blue-500 bg-blue-50 rounded-full px-2 py-0.5 capitalize">
-                        {log.amount_ml <= 50 ? 'misting' : log.amount_ml <= 150 ? 'light' : log.amount_ml <= 300 ? 'normal' : 'soaked'}
-                      </span>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {log.amount_ml && (
+                        <span className="text-xs text-blue-500 bg-blue-50 rounded-full px-2 py-0.5 capitalize">
+                          {log.amount_ml <= 50 ? 'misting' : log.amount_ml <= 150 ? 'light' : log.amount_ml <= 300 ? 'normal' : 'soaked'}
+                        </span>
+                      )}
+                      <button onClick={() => deleteWateringLog(log.id)} className="text-xs text-stone-300 hover:text-red-400 transition-colors">Delete</button>
+                    </div>
                   </div>
                   {log.notes && <p className="text-xs text-stone-500 mt-1">{log.notes}</p>}
                   <p className="text-xs text-stone-300 mt-1">
@@ -393,7 +411,7 @@ export default function PlantDetail({ plantId, userId, onBack, onDeleted }: Prop
                     <span className="text-sm font-medium text-stone-700">
                       {format(new Date(log.fertilized_at), 'MMM d, yyyy')}
                     </span>
-                    <div className="flex gap-1">
+                    <div className="flex items-center gap-2">
                       {log.fertilizer_name && (
                         <span className="text-xs text-amber-600 bg-amber-50 rounded-full px-2 py-0.5">
                           {log.fertilizer_name}
@@ -404,6 +422,7 @@ export default function PlantDetail({ plantId, userId, onBack, onDeleted }: Prop
                           {log.amount_ml} ml
                         </span>
                       )}
+                      <button onClick={() => deleteFertilizeLog(log.id)} className="text-xs text-stone-300 hover:text-red-400 transition-colors">Delete</button>
                     </div>
                   </div>
                   {log.notes && <p className="text-xs text-stone-500 mt-1">{log.notes}</p>}
@@ -456,9 +475,12 @@ export default function PlantDetail({ plantId, userId, onBack, onDeleted }: Prop
                     <span className="text-xs text-leaf-600 bg-leaf-50 rounded-full px-2 py-0.5 font-medium">
                       {log.care_type ?? 'Note'}
                     </span>
-                    <span className="text-xs text-stone-400">
-                      {format(new Date(log.logged_at), 'MMM d, yyyy')}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-stone-400">
+                        {format(new Date(log.logged_at), 'MMM d, yyyy')}
+                      </span>
+                      <button onClick={() => deleteCareLog(log.id)} className="text-xs text-stone-300 hover:text-red-400 transition-colors">Delete</button>
+                    </div>
                   </div>
                   <p className="text-sm text-stone-700">{log.note}</p>
                   <p className="text-xs text-stone-300 mt-1">
