@@ -34,6 +34,7 @@ export interface FertilizeLog {
   fertilized_at: string;
   notes: string | null;
   fertilizer_name: string | null;
+  amount_ml: number | null;
   profiles?: { full_name: string | null; email: string | null };
 }
 

@@ -28,9 +28,10 @@ export default function PlantDetail({ plantId, userId, onBack, onDeleted }: Prop
 
   // Quick-log state
   const [waterNote, setWaterNote] = useState('');
-  const [waterAmount, setWaterAmount] = useState('');
+  const [waterIntensity, setWaterIntensity] = useState<'misting' | 'light' | 'normal' | 'soaked'>('normal');
   const [fertNote, setFertNote] = useState('');
   const [fertName, setFertName] = useState('');
+  const [fertAmount, setFertAmount] = useState('');
   const [careNote, setCareNote] = useState('');
   const [careType, setCareType] = useState(CARE_TYPES[0]);
   const [logSaving, setLogSaving] = useState(false);
@@ -93,16 +94,18 @@ export default function PlantDetail({ plantId, userId, onBack, onDeleted }: Prop
     return () => { supabase.removeChannel(plantSub); };
   }, [plantId, loadPlant, loadLogs]);
 
+  const intensityToMl = { misting: 50, light: 150, normal: 300, soaked: 500 };
+
   async function logWatering() {
     setLogSaving(true);
     await supabase.from('watering_logs').insert({
       plant_id: plantId,
       watered_by: userId,
       notes: waterNote.trim() || null,
-      amount_ml: waterAmount ? parseInt(waterAmount) : null,
+      amount_ml: intensityToMl[waterIntensity],
     });
     setWaterNote('');
-    setWaterAmount('');
+    setWaterIntensity('normal');
     await loadLogs();
     setLogSaving(false);
   }
@@ -114,9 +117,11 @@ export default function PlantDetail({ plantId, userId, onBack, onDeleted }: Prop
       fertilized_by: userId,
       notes: fertNote.trim() || null,
       fertilizer_name: fertName.trim() || null,
+      amount_ml: fertAmount ? parseInt(fertAmount) : null,
     });
     setFertNote('');
     setFertName('');
+    setFertAmount('');
     await loadLogs();
     setLogSaving(false);
   }
@@ -280,13 +285,28 @@ export default function PlantDetail({ plantId, userId, onBack, onDeleted }: Prop
           <div className="space-y-4">
             <div className="bg-white rounded-2xl p-4 shadow-sm border border-stone-100 space-y-3">
               <h3 className="font-medium text-stone-700">Log watering</h3>
-              <input
-                type="number"
-                placeholder="Amount (ml) — optional"
-                value={waterAmount}
-                onChange={(e) => setWaterAmount(e.target.value)}
-                className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-leaf-400"
-              />
+              <div className="grid grid-cols-4 gap-2">
+                {(['misting', 'light', 'normal', 'soaked'] as const).map((level) => (
+                  <button
+                    key={level}
+                    type="button"
+                    onClick={() => setWaterIntensity(level)}
+                    className={`py-2 rounded-lg text-xs font-medium capitalize border transition-colors ${
+                      waterIntensity === level
+                        ? 'bg-blue-500 text-white border-blue-500'
+                        : 'bg-white text-stone-500 border-stone-200 hover:border-blue-300'
+                    }`}
+                  >
+                    {level}
+                  </button>
+                ))}
+              </div>
+              <p className="text-xs text-stone-400 text-center">
+                {waterIntensity === 'misting' && 'Light spray — ~50ml'}
+                {waterIntensity === 'light' && 'Small amount — ~150ml'}
+                {waterIntensity === 'normal' && 'Regular watering — ~300ml'}
+                {waterIntensity === 'soaked' && 'Thorough soak — ~500ml'}
+              </p>
               <textarea
                 placeholder="Notes (optional)"
                 value={waterNote}
@@ -311,11 +331,11 @@ export default function PlantDetail({ plantId, userId, onBack, onDeleted }: Prop
                 <div key={log.id} className="bg-white rounded-xl p-3 shadow-sm border border-stone-100">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-stone-700">
-                      {format(new Date(log.watered_at), 'MMM d, yyyy — h:mm a')}
+                      {format(new Date(log.watered_at), 'MMM d, yyyy')}
                     </span>
                     {log.amount_ml && (
-                      <span className="text-xs text-blue-500 bg-blue-50 rounded-full px-2 py-0.5">
-                        {log.amount_ml} ml
+                      <span className="text-xs text-blue-500 bg-blue-50 rounded-full px-2 py-0.5 capitalize">
+                        {log.amount_ml <= 50 ? 'misting' : log.amount_ml <= 150 ? 'light' : log.amount_ml <= 300 ? 'normal' : 'soaked'}
                       </span>
                     )}
                   </div>
@@ -338,6 +358,13 @@ export default function PlantDetail({ plantId, userId, onBack, onDeleted }: Prop
                 placeholder="Fertilizer name (optional)"
                 value={fertName}
                 onChange={(e) => setFertName(e.target.value)}
+                className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-leaf-400"
+              />
+              <input
+                type="number"
+                placeholder="Amount in ml (optional)"
+                value={fertAmount}
+                onChange={(e) => setFertAmount(e.target.value)}
                 className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-leaf-400"
               />
               <textarea
@@ -364,13 +391,20 @@ export default function PlantDetail({ plantId, userId, onBack, onDeleted }: Prop
                 <div key={log.id} className="bg-white rounded-xl p-3 shadow-sm border border-stone-100">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-stone-700">
-                      {format(new Date(log.fertilized_at), 'MMM d, yyyy — h:mm a')}
+                      {format(new Date(log.fertilized_at), 'MMM d, yyyy')}
                     </span>
-                    {log.fertilizer_name && (
-                      <span className="text-xs text-amber-600 bg-amber-50 rounded-full px-2 py-0.5">
-                        {log.fertilizer_name}
-                      </span>
-                    )}
+                    <div className="flex gap-1">
+                      {log.fertilizer_name && (
+                        <span className="text-xs text-amber-600 bg-amber-50 rounded-full px-2 py-0.5">
+                          {log.fertilizer_name}
+                        </span>
+                      )}
+                      {log.amount_ml && (
+                        <span className="text-xs text-stone-500 bg-stone-100 rounded-full px-2 py-0.5">
+                          {log.amount_ml} ml
+                        </span>
+                      )}
+                    </div>
                   </div>
                   {log.notes && <p className="text-xs text-stone-500 mt-1">{log.notes}</p>}
                   <p className="text-xs text-stone-300 mt-1">
