@@ -109,7 +109,7 @@ export default function AddEditPlant({ userId, plant, onSaved, onCancel }: Props
               {photoUrl ? (
                 <img src={photoUrl} alt="" className="w-full h-full object-cover" />
               ) : (
-                <span className="text-3xl">{uploading ? '⏳' : '📷'}</span>
+                <span className="text-sm text-stone-400">{uploading ? 'Uploading...' : 'Add photo'}</span>
               )}
             </div>
             <button

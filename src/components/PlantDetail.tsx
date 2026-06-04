@@ -144,7 +144,7 @@ export default function PlantDetail({ plantId, userId, onBack, onDeleted }: Prop
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <span className="text-4xl animate-pulse">🌱</span>
+        <div className="w-10 h-10 border-4 border-leaf-600 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -159,11 +159,11 @@ export default function PlantDetail({ plantId, userId, onBack, onDeleted }: Prop
   }
 
   const displayName = plant.nickname || plant.species;
-  const tabs: { id: Tab; label: string; emoji: string }[] = [
-    { id: 'overview', label: 'Overview', emoji: '🌿' },
-    { id: 'watering', label: 'Water', emoji: '💧' },
-    { id: 'fertilize', label: 'Fertilize', emoji: '🌾' },
-    { id: 'care', label: 'Care log', emoji: '📋' },
+  const tabs: { id: Tab; label: string }[] = [
+    { id: 'overview', label: 'Overview' },
+    { id: 'watering', label: 'Water' },
+    { id: 'fertilize', label: 'Fertilize' },
+    { id: 'care', label: 'Care log' },
   ];
 
   return (
@@ -173,7 +173,7 @@ export default function PlantDetail({ plantId, userId, onBack, onDeleted }: Prop
         {plant.photo_url ? (
           <img src={plant.photo_url} alt={displayName} className="w-full h-full object-cover" />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-7xl">🪴</div>
+          <div className="w-full h-full flex items-center justify-center text-7xl text-leaf-400">✿</div>
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
 
@@ -211,14 +211,13 @@ export default function PlantDetail({ plantId, userId, onBack, onDeleted }: Prop
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
-            className={`flex-1 py-3 text-xs font-medium flex flex-col items-center gap-0.5 transition-colors ${
+            className={`flex-1 py-3 text-xs font-medium transition-colors ${
               tab === t.id
                 ? 'text-leaf-700 border-b-2 border-leaf-600'
                 : 'text-stone-400 hover:text-stone-600'
             }`}
           >
-            <span className="text-base">{t.emoji}</span>
-            <span>{t.label}</span>
+            {t.label}
           </button>
         ))}
       </div>
@@ -300,7 +299,7 @@ export default function PlantDetail({ plantId, userId, onBack, onDeleted }: Prop
                 disabled={logSaving}
                 className="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
               >
-                💧 Log watering
+                Log watering
               </button>
             </div>
 
@@ -312,7 +311,7 @@ export default function PlantDetail({ plantId, userId, onBack, onDeleted }: Prop
                 <div key={log.id} className="bg-white rounded-xl p-3 shadow-sm border border-stone-100">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-stone-700">
-                      💧 {format(new Date(log.watered_at), 'MMM d, yyyy — h:mm a')}
+                      {format(new Date(log.watered_at), 'MMM d, yyyy — h:mm a')}
                     </span>
                     {log.amount_ml && (
                       <span className="text-xs text-blue-500 bg-blue-50 rounded-full px-2 py-0.5">
@@ -353,7 +352,7 @@ export default function PlantDetail({ plantId, userId, onBack, onDeleted }: Prop
                 disabled={logSaving}
                 className="w-full bg-amber-500 hover:bg-amber-600 text-white py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
               >
-                🌾 Log fertilizing
+                Log fertilizing
               </button>
             </div>
 
@@ -365,7 +364,7 @@ export default function PlantDetail({ plantId, userId, onBack, onDeleted }: Prop
                 <div key={log.id} className="bg-white rounded-xl p-3 shadow-sm border border-stone-100">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-stone-700">
-                      🌾 {format(new Date(log.fertilized_at), 'MMM d, yyyy — h:mm a')}
+                      {format(new Date(log.fertilized_at), 'MMM d, yyyy — h:mm a')}
                     </span>
                     {log.fertilizer_name && (
                       <span className="text-xs text-amber-600 bg-amber-50 rounded-full px-2 py-0.5">
@@ -409,7 +408,7 @@ export default function PlantDetail({ plantId, userId, onBack, onDeleted }: Prop
                 disabled={logSaving || !careNote.trim()}
                 className="w-full bg-leaf-600 hover:bg-leaf-700 text-white py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
               >
-                📋 Save note
+                Save note
               </button>
             </div>
 
