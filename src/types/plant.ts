@@ -4,7 +4,7 @@ export interface Plant {
   species: string;
   nickname: string | null;
   photo_url: string | null;
-  date_acquired: string | null; // ISO date string
+  date_acquired: string | null;
   created_at: string;
   updated_at: string;
   caretakers?: Caretaker[];
@@ -46,4 +46,31 @@ export interface CareLog {
   note: string;
   care_type: string | null;
   profiles?: { full_name: string | null; email: string | null };
+}
+
+export type PropagationStage = 'cutting' | 'rooting' | 'rooted' | 'potted' | 'established' | 'failed';
+export type PropagationMethod = 'leaf' | 'stem' | 'offset' | 'division' | 'water';
+
+export interface Propagation {
+  id: string;
+  plant_id: string;
+  owner_id: string;
+  method: PropagationMethod;
+  current_stage: PropagationStage;
+  date_taken: string;
+  notes: string | null;
+  photo_url: string | null;
+  created_at: string;
+  updated_at: string;
+  plants?: { species: string; nickname: string | null };
+}
+
+export interface PropagationUpdate {
+  id: string;
+  propagation_id: string;
+  stage: PropagationStage;
+  notes: string | null;
+  photo_url: string | null;
+  logged_at: string;
+  logged_by: string | null;
 }
