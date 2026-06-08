@@ -119,7 +119,7 @@ export default function PlantList({ userId, userName, onSelect, onSignOut }: Pro
       {/* FAB */}
       <button
         onClick={() => setAdding(true)}
-        className="fixed bottom-6 right-6 w-14 h-14 bg-leaf-600 hover:bg-leaf-700 text-white rounded-full shadow-lg text-2xl flex items-center justify-center transition-colors"
+        className="fixed bottom-20 right-6 w-14 h-14 bg-leaf-600 hover:bg-leaf-700 text-white rounded-full shadow-lg text-2xl flex items-center justify-center transition-colors"
         title="Add plant"
       >
         +
