@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { format, formatDistanceToNow } from 'date-fns';
 import { supabase } from '../lib/supabaseClient';
 import type { Plant, WateringLog, FertilizeLog, CareLog } from '../types/plant';
@@ -34,7 +34,10 @@ export default function PlantDetail({ plantId, userId, onBack, onDeleted }: Prop
   const [fertAmount, setFertAmount] = useState('');
   const [careNote, setCareNote] = useState('');
   const [careType, setCareType] = useState(CARE_TYPES[0]);
+  const [carePhoto, setCarePhoto] = useState('');
+  const [careUploading, setCareUploading] = useState(false);
   const [logSaving, setLogSaving] = useState(false);
+  const careFileRef = useRef<HTMLInputElement>(null);
 
   const loadPlant = useCallback(async () => {
     const { data } = await supabase
@@ -126,6 +129,19 @@ export default function PlantDetail({ plantId, userId, onBack, onDeleted }: Prop
     setLogSaving(false);
   }
 
+  async function handleCarePhoto(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setCareUploading(true);
+    const path = `${userId}/care-${Date.now()}.${file.name.split('.').pop()}`;
+    const { error } = await supabase.storage.from('plant-photos').upload(path, file, { upsert: true });
+    if (!error) {
+      const { data } = supabase.storage.from('plant-photos').getPublicUrl(path);
+      setCarePhoto(data.publicUrl);
+    }
+    setCareUploading(false);
+  }
+
   async function logCare() {
     if (!careNote.trim()) return;
     setLogSaving(true);
@@ -134,8 +150,10 @@ export default function PlantDetail({ plantId, userId, onBack, onDeleted }: Prop
       logged_by: userId,
       note: careNote.trim(),
       care_type: careType,
+      photo_url: carePhoto || null,
     });
     setCareNote('');
+    setCarePhoto('');
     await loadLogs();
     setLogSaving(false);
   }
@@ -440,6 +458,14 @@ export default function PlantDetail({ plantId, userId, onBack, onDeleted }: Prop
           <div className="space-y-4">
             <div className="bg-white rounded-2xl p-4 shadow-sm border border-stone-100 space-y-3">
               <h3 className="font-medium text-stone-700">Add care note</h3>
+              <div onClick={() => careFileRef.current?.click()}
+                className="w-full h-24 rounded-xl bg-stone-50 border-2 border-dashed border-stone-200 flex items-center justify-center cursor-pointer hover:bg-stone-100 overflow-hidden">
+                {carePhoto
+                  ? <img src={carePhoto} alt="" className="w-full h-full object-cover rounded-xl" />
+                  : <span className="text-sm text-stone-400">{careUploading ? 'Uploading...' : '+ Add photo (optional)'}</span>
+                }
+              </div>
+              <input ref={careFileRef} type="file" accept="image/*" className="hidden" onChange={handleCarePhoto} />
               <select
                 value={careType}
                 onChange={(e) => setCareType(e.target.value)}
@@ -482,7 +508,8 @@ export default function PlantDetail({ plantId, userId, onBack, onDeleted }: Prop
                       <button onClick={() => deleteCareLog(log.id)} className="text-xs text-stone-300 hover:text-red-400 transition-colors">Delete</button>
                     </div>
                   </div>
-                  <p className="text-sm text-stone-700">{log.note}</p>
+                  {log.photo_url && <img src={log.photo_url} alt="" className="w-full h-36 object-cover rounded-lg mt-2" />}
+                  <p className="text-sm text-stone-700 mt-1">{log.note}</p>
                   <p className="text-xs text-stone-300 mt-1">
                     by {log.profiles?.full_name ?? log.profiles?.email ?? 'someone'}
                   </p>

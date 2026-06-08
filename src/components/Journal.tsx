@@ -7,6 +7,7 @@ type Props = { userId: string };
 type DayActivity = {
   date: Date;
   plantPhotos: string[];
+  plantPhotos: string[];
   propPhotos: string[];
   hasPlantActivity: boolean;
   hasPropActivity: boolean;
@@ -32,7 +33,7 @@ export default function Journal({ userId }: Props) {
       const [watering, fertilize, care, propUpdates] = await Promise.all([
         supabase.from('watering_logs').select('plant_id, watered_at, notes, plants(species, nickname)').gte('watered_at', start).lte('watered_at', end),
         supabase.from('fertilize_logs').select('plant_id, fertilized_at, fertilizer_name, plants(species, nickname)').gte('fertilized_at', start).lte('fertilized_at', end),
-        supabase.from('care_logs').select('plant_id, logged_at, note, care_type, plants(species, nickname)').gte('logged_at', start).lte('logged_at', end),
+        supabase.from('care_logs').select('plant_id, logged_at, note, care_type, photo_url, plants(species, nickname)').gte('logged_at', start).lte('logged_at', end),
         supabase.from('propagation_updates').select('propagation_id, logged_at, notes, photo_url, stage, propagations(plant_id, plants(species, nickname))').gte('logged_at', start).lte('logged_at', end),
       ]);
 
@@ -55,6 +56,7 @@ export default function Journal({ userId }: Props) {
       for (const c of (care.data ?? []) as any[]) {
         const d = getOrCreate(new Date(c.logged_at));
         d.hasPlantActivity = true;
+        if (c.photo_url) d.plantPhotos.push(c.photo_url);
       }
       for (const u of (propUpdates.data ?? []) as any[]) {
         const d = getOrCreate(new Date(u.logged_at));
@@ -134,7 +136,10 @@ export default function Journal({ userId }: Props) {
             {days.map(day => {
               const key = format(day, 'yyyy-MM-dd');
               const act = activity.get(key);
-              const photo = act?.propPhotos[0];
+              const propPhoto = act?.propPhotos[0];
+              const plantPhoto = act?.plantPhotos[0];
+              const photo = propPhoto ?? plantPhoto;
+              const ringColor = propPhoto ? 'ring-purple-500' : 'ring-leaf-500';
               const isToday = isSameDay(day, new Date());
 
               return (
@@ -143,7 +148,7 @@ export default function Journal({ userId }: Props) {
                   {photo ? (
                     <>
                       <img src={photo} alt="" className="absolute inset-0 w-full h-full object-cover" />
-                      <div className="absolute inset-0 rounded-full ring-2 ring-purple-500" />
+                      <div className={`absolute inset-0 rounded-full ring-2 ${ringColor}`} />
                       <span className="relative text-xs font-bold text-white drop-shadow">{format(day, 'd')}</span>
                     </>
                   ) : (

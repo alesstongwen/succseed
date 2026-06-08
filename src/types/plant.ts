@@ -45,6 +45,7 @@ export interface CareLog {
   logged_at: string;
   note: string;
   care_type: string | null;
+  photo_url: string | null;
   profiles?: { full_name: string | null; email: string | null };
 }
 
