@@ -1,9 +1,9 @@
 import { useEffect, useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { format, differenceInDays } from 'date-fns';
 import { supabase } from '../lib/supabaseClient';
 import type { Propagation, PropagationStage, PropagationMethod } from '../types/plant';
 import AddPropagation from './AddPropagation';
-import PropagationDetail from './PropagationDetail';
 
 type Props = { userId: string };
 
@@ -19,10 +19,10 @@ const STAGE_COLORS: Record<PropagationStage, string> = {
 };
 
 export default function PropagationList({ userId }: Props) {
+  const navigate = useNavigate();
   const [propagations, setPropagations] = useState<Propagation[]>([]);
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
-  const [selected, setSelected] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     const { data } = await supabase
@@ -41,10 +41,6 @@ export default function PropagationList({ userId }: Props) {
       .subscribe();
     return () => { supabase.removeChannel(sub); };
   }, [load]);
-
-  if (selected) {
-    return <PropagationDetail propagationId={selected} userId={userId} onBack={() => { setSelected(null); load(); }} />;
-  }
 
   const active = propagations.filter(p => p.current_stage !== 'established' && p.current_stage !== 'failed');
   const done = propagations.filter(p => p.current_stage === 'established' || p.current_stage === 'failed');
@@ -73,7 +69,7 @@ export default function PropagationList({ userId }: Props) {
               <div>
                 <p className="text-xs font-semibold text-stone-400 uppercase tracking-wide mb-2">In progress</p>
                 <div className="space-y-2">
-                  {active.map(p => <PropagationCard key={p.id} prop={p} onClick={() => setSelected(p.id)} />)}
+                  {active.map(p => <PropagationCard key={p.id} prop={p} onClick={() => navigate(`/propagations/${p.id}`)} />)}
                 </div>
               </div>
             )}
@@ -81,7 +77,7 @@ export default function PropagationList({ userId }: Props) {
               <div>
                 <p className="text-xs font-semibold text-stone-400 uppercase tracking-wide mb-2">Completed</p>
                 <div className="space-y-2">
-                  {done.map(p => <PropagationCard key={p.id} prop={p} onClick={() => setSelected(p.id)} />)}
+                  {done.map(p => <PropagationCard key={p.id} prop={p} onClick={() => navigate(`/propagations/${p.id}`)} />)}
                 </div>
               </div>
             )}

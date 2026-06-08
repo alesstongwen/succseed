@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import type { Plant, WateringLog } from '../types/plant';
 import PlantCard from './PlantCard';
@@ -7,11 +8,11 @@ import AddEditPlant from './AddEditPlant';
 type Props = {
   userId: string;
   userName: string | null;
-  onSelect: (plantId: string) => void;
   onSignOut: () => void;
 };
 
-export default function PlantList({ userId, userName, onSelect, onSignOut }: Props) {
+export default function PlantList({ userId, userName, onSignOut }: Props) {
+  const navigate = useNavigate();
   const [plants, setPlants] = useState<Plant[]>([]);
   const [lastWaterings, setLastWaterings] = useState<Record<string, WateringLog>>({});
   const [loading, setLoading] = useState(true);
@@ -109,7 +110,7 @@ export default function PlantList({ userId, userName, onSelect, onSignOut }: Pro
                 key={plant.id}
                 plant={plant}
                 lastWatering={lastWaterings[plant.id]}
-                onClick={() => onSelect(plant.id)}
+                onClick={() => navigate(`/plants/${plant.id}`)}
               />
             ))}
           </div>
