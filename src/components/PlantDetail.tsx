@@ -532,6 +532,7 @@ export default function PlantDetail({ plantId, userId, onBack, onDeleted }: Prop
       {showInvite && (
         <AddCoParent
           plantId={plantId}
+          plantName={plant ? (plant.nickname || plant.species) : 'a plant'}
           open={showInvite}
           onClose={() => setShowInvite(false)}
           onAdded={() => loadPlant()}

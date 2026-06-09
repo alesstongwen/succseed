@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabaseClient';
 import type { Plant, WateringLog } from '../types/plant';
 import PlantCard from './PlantCard';
 import AddEditPlant from './AddEditPlant';
+import NotificationsBell from './NotificationsBell';
 
 type Props = {
   userId: string;
@@ -84,12 +85,15 @@ export default function PlantList({ userId, userName, onSignOut }: Props) {
           <h1 className="text-xl font-bold text-stone-800">Succseed</h1>
           <p className="text-xs text-stone-400">{greeting}</p>
         </div>
-        <button
-          onClick={onSignOut}
-          className="text-xs text-stone-400 hover:text-stone-600 border border-stone-200 rounded-lg px-3 py-1.5"
-        >
-          Sign out
-        </button>
+        <div className="flex items-center gap-2">
+          <NotificationsBell userId={userId} />
+          <button
+            onClick={onSignOut}
+            className="text-xs text-stone-400 hover:text-stone-600 border border-stone-200 rounded-lg px-3 py-1.5"
+          >
+            Sign out
+          </button>
+        </div>
       </div>
 
       <div className="p-4 max-w-lg mx-auto">

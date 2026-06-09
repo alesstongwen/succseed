@@ -3,12 +3,13 @@ import { supabase } from "../lib/supabaseClient";
 
 type Props = {
   plantId: string;
+  plantName: string;
   open: boolean;
   onClose: () => void;
-  onAdded?: (userId: string) => void; // optional callback when a co-parent is added
+  onAdded?: (userId: string) => void;
 };
 
-export default function AddCoParent({ plantId, open, onClose, onAdded }: Props) {
+export default function AddCoParent({ plantId, plantName, open, onClose, onAdded }: Props) {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
@@ -38,7 +39,6 @@ export default function AddCoParent({ plantId, open, onClose, onAdded }: Props) 
     setInviteUrl(null);
 
     try {
-      // 1) Try to find an existing profile by email (public mirror of auth.users)
       const { data: profile, error: profileErr } = await supabase
         .from("profiles")
         .select("id, email, full_name, avatar_url")
@@ -48,29 +48,31 @@ export default function AddCoParent({ plantId, open, onClose, onAdded }: Props) 
       if (profileErr) throw profileErr;
 
       if (profile?.id) {
-        // 2) Add as caretaker
         const { error: insertErr } = await supabase
           .from("plant_caretakers")
-          .insert({
-            plant_id: plantId,
-            user_id: profile.id,
-            role: "COPARENT",
-          });
+          .insert({ plant_id: plantId, user_id: profile.id, role: "COPARENT" });
 
         if (insertErr) {
-          // handle duplicate gracefully
           if ((insertErr as any).code === "23505") {
-            setMsg("This person is already a co-parent for the plant.");
+            setMsg("This person is already a co-parent for this plant.");
           } else {
             throw insertErr;
           }
         } else {
-          setMsg(`Added ${profile.email} as a co-parent ✅`);
+          // Notify the added user
+          const { data: authData } = await supabase.auth.getUser();
+          const inviterName = String(authData.user?.user_metadata?.full_name ?? authData.user?.email ?? 'Someone');
+          await supabase.from('notifications').insert({
+            user_id: profile.id,
+            type: 'coparent_added',
+            title: inviterName + ' added you as co-parent',
+            body: 'You are now a co-parent of ' + plantName,
+          });
+          setMsg("Added as co-parent!");
           onAdded?.(profile.id);
           setEmail("");
         }
       } else {
-        // 3) No profile found → create an invite and show a join link to share
         const { data: invite, error: inviteErr } = await supabase
           .from("plant_invites")
           .insert({ plant_id: plantId, email })
@@ -79,14 +81,19 @@ export default function AddCoParent({ plantId, open, onClose, onAdded }: Props) 
 
         if (inviteErr) throw inviteErr;
 
-        const url = new URL(`/accept-invite/${invite.id}`, window.location.origin).toString();
+        const url = new URL("/accept-invite/" + invite.id, window.location.origin).toString();
         setInviteUrl(url);
-        setMsg(
-          "No account found for that email. An invite was created — share the link below. Once they sign up, they’ll be linked automatically."
-        );
+
+        const { data: authData } = await supabase.auth.getUser();
+        const inviterName = String(authData.user?.user_metadata?.full_name ?? authData.user?.email ?? "Someone");
+
+        supabase.functions.invoke("send-invite-email", {
+          body: { inviteUrl: url, inviteeEmail: email, plantName, inviterName },
+        }).catch(() => {});
+
+        setMsg("Invite sent! They will get an email with a link to join.");
       }
     } catch (err: any) {
-      console.error(err);
       setMsg(err.message ?? "Something went wrong.");
     } finally {
       setLoading(false);
@@ -104,9 +111,7 @@ export default function AddCoParent({ plantId, open, onClose, onAdded }: Props) 
       <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-xl">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold">Invite a co-parent</h2>
-          <button onClick={onClose} className="rounded px-2 py-1 text-sm hover:bg-gray-100">
-            ✕
-          </button>
+          <button onClick={onClose} className="rounded px-2 py-1 text-sm hover:bg-gray-100">x</button>
         </div>
 
         <form onSubmit={handleInvite} className="space-y-3">
@@ -125,9 +130,9 @@ export default function AddCoParent({ plantId, open, onClose, onAdded }: Props) 
           <button
             type="submit"
             disabled={!canSubmit || loading}
-            className="w-full rounded bg-green-600 p-2 text-white disabled:opacity-50"
+            className="w-full rounded bg-leaf-600 p-2 text-white disabled:opacity-50"
           >
-            {loading ? "Sending..." : "Invite"}
+            {loading ? "Sending..." : "Send invite"}
           </button>
         </form>
 
@@ -135,12 +140,10 @@ export default function AddCoParent({ plantId, open, onClose, onAdded }: Props) 
 
         {inviteUrl && (
           <div className="mt-3 rounded border p-2">
-            <div className="mb-2 text-xs text-gray-500">Share this link:</div>
+            <div className="mb-2 text-xs text-gray-500">Or share this link manually:</div>
             <div className="flex items-center gap-2">
               <input className="w-full rounded border p-2 text-xs" value={inviteUrl} readOnly />
-              <button onClick={copyLink} className="rounded border px-2 py-1 text-sm">
-                Copy
-              </button>
+              <button onClick={copyLink} className="rounded border px-2 py-1 text-sm">Copy</button>
             </div>
           </div>
         )}

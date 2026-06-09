@@ -4,13 +4,15 @@ import { supabase } from '../lib/supabaseClient';
 
 type Props = { inviteId: string };
 
-type InviteStatus = 'loading' | 'ready' | 'processing' | 'done' | 'already' | 'expired' | 'error';
+type InviteStatus = 'loading' | 'ready' | 'signin' | 'sent' | 'processing' | 'done' | 'already' | 'expired' | 'error';
 
 export default function AcceptInvite({ inviteId }: Props) {
   const navigate = useNavigate();
   const [status, setStatus] = useState<InviteStatus>('loading');
   const [plantName, setPlantName] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [email, setEmail] = useState('');
+  const [sendingLink, setSendingLink] = useState(false);
 
   useEffect(() => {
     async function checkInvite() {
@@ -25,41 +27,50 @@ export default function AcceptInvite({ inviteId }: Props) {
 
       const p = (invite as any).plants;
       setPlantName(p?.nickname ?? p?.species ?? 'a plant');
-      setStatus('ready');
+
+      // If already signed in, process immediately
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        processInvite(session.user.id);
+      } else {
+        setStatus('ready');
+      }
     }
     checkInvite();
   }, [inviteId]);
 
-  // After auth state resolves, if user is now signed in and we have a pending invite, process it
+  // Listen for sign-in after magic link click
   useEffect(() => {
-    if (status !== 'ready') return;
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) processInvite(session.user.id);
-    });
-
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user && status === 'ready') {
+      if (session?.user && (status === 'ready' || status === 'signin' || status === 'sent')) {
         processInvite(session.user.id);
       }
     });
     return () => subscription.unsubscribe();
   }, [status]);
 
+  async function sendMagicLink(e: React.FormEvent) {
+    e.preventDefault();
+    setSendingLink(true);
+    const redirectTo = window.location.href;
+    const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: redirectTo } });
+    setSendingLink(false);
+    if (error) { setErrorMsg(error.message); return; }
+    setStatus('sent');
+  }
+
   async function processInvite(userId: string) {
     setStatus('processing');
 
-    // Re-fetch to get plant_id and check it matches the invited email (or allow any)
     const { data: invite, error } = await supabase
       .from('plant_invites')
-      .select('id, plant_id, email, accepted_at')
+      .select('id, plant_id, accepted_at')
       .eq('id', inviteId)
       .maybeSingle();
 
     if (error || !invite) { setStatus('expired'); return; }
     if (invite.accepted_at) { setStatus('already'); return; }
 
-    // Insert caretaker row
     const { error: insertErr } = await supabase
       .from('plant_caretakers')
       .insert({ plant_id: invite.plant_id, user_id: userId, role: 'COPARENT' });
@@ -70,11 +81,27 @@ export default function AcceptInvite({ inviteId }: Props) {
       return;
     }
 
-    // Mark invite as accepted
     await supabase
       .from('plant_invites')
       .update({ accepted_at: new Date().toISOString(), accepted_by: userId })
       .eq('id', inviteId);
+
+    // Notify the plant owner
+    const { data: caretakers } = await supabase
+      .from('plant_caretakers')
+      .select('user_id, role')
+      .eq('plant_id', invite.plant_id);
+    const owner = (caretakers ?? []).find((c: any) => c.role === 'OWNER');
+    if (owner) {
+      const { data: authData } = await supabase.auth.getUser();
+      const accepterName = String(authData.user?.user_metadata?.full_name ?? authData.user?.email ?? 'Someone');
+      await supabase.from('notifications').insert({
+        user_id: owner.user_id,
+        type: 'coparent_accepted',
+        title: accepterName + ' accepted your invite',
+        body: 'They are now a co-parent of ' + (plantName ?? 'your plant'),
+      });
+    }
 
     setStatus('done');
     setTimeout(() => navigate('/plants'), 2000);
@@ -94,16 +121,52 @@ export default function AcceptInvite({ inviteId }: Props) {
 
         {status === 'ready' && (
           <>
-            <h1 className="text-xl font-bold text-stone-800 mb-2">You're invited!</h1>
-            <p className="text-stone-500 text-sm mb-4">
-              Sign in or create an account to become a co-parent of <span className="font-medium text-stone-700">{plantName}</span>.
+            <h1 className="text-xl font-bold text-stone-800 mb-2">You are invited!</h1>
+            <p className="text-stone-500 text-sm mb-6">
+              Sign in to become a co-parent of <span className="font-medium text-stone-700">{plantName}</span>.
             </p>
             <button
-              onClick={() => navigate(`/login?redirect=/accept-invite/${inviteId}`)}
+              onClick={() => setStatus('signin')}
               className="w-full bg-leaf-600 hover:bg-leaf-700 text-white rounded-xl py-3 font-medium transition-colors"
             >
               Sign in / Sign up
             </button>
+          </>
+        )}
+
+        {status === 'signin' && (
+          <>
+            <h1 className="text-xl font-bold text-stone-800 mb-2">Enter your email</h1>
+            <p className="text-stone-500 text-sm mb-4">
+              We will send you a magic link — no password needed.
+            </p>
+            <form onSubmit={sendMagicLink} className="space-y-3 text-left">
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                required
+                className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-leaf-400"
+              />
+              {errorMsg && <p className="text-xs text-red-500">{errorMsg}</p>}
+              <button
+                type="submit"
+                disabled={sendingLink}
+                className="w-full bg-leaf-600 hover:bg-leaf-700 text-white rounded-xl py-3 font-medium transition-colors disabled:opacity-50"
+              >
+                {sendingLink ? 'Sending...' : 'Send magic link'}
+              </button>
+            </form>
+          </>
+        )}
+
+        {status === 'sent' && (
+          <>
+            <h1 className="text-xl font-bold text-stone-800 mb-2">Check your email</h1>
+            <p className="text-stone-500 text-sm">
+              We sent a link to <span className="font-medium text-stone-700">{email}</span>. Tap it and you will be added as co-parent of <span className="font-medium text-stone-700">{plantName}</span> automatically.
+            </p>
           </>
         )}
 
@@ -116,7 +179,7 @@ export default function AcceptInvite({ inviteId }: Props) {
 
         {status === 'done' && (
           <>
-            <h1 className="text-xl font-bold text-stone-800 mb-2">You're in!</h1>
+            <h1 className="text-xl font-bold text-stone-800 mb-2">You are in!</h1>
             <p className="text-stone-500 text-sm">
               <span className="font-medium text-stone-700">{plantName}</span> has been added to your plants. Redirecting...
             </p>
