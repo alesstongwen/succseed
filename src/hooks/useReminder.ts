@@ -1,13 +1,12 @@
 import { differenceInDays, parseISO } from "date-fns";
-import type { Plant } from "../types/plant";
+import type { WateringLog } from "../types/plant";
 
-export function useReminder(plant: Plant) {
-  const last = parseISO(plant.lastWatered);
+export function useReminder(lastWateringLog: WateringLog | null) {
+  if (!lastWateringLog) return { daysSince: null, needsWater: false };
+
+  const last = parseISO(lastWateringLog.watered_at);
   const daysSince = differenceInDays(new Date(), last);
-  const needsWater = daysSince >= 14; 
+  const needsWater = daysSince >= 14;
 
-  return {
-    daysSince,
-    needsWater,
-  };
+  return { daysSince, needsWater };
 }
