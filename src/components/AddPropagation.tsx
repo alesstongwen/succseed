@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from '../lib/supabaseClient';
+import { compressImage } from '../lib/compressImage';
 import type { Plant, PropagationMethod } from '../types/plant';
 
 type Props = {
@@ -38,8 +39,9 @@ export default function AddPropagation({ userId, onSaved, onCancel }: Props) {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
-    const path = `${userId}/prop-${Date.now()}.${file.name.split('.').pop()}`;
-    const { error: err } = await supabase.storage.from('plant-photos').upload(path, file, { upsert: true });
+    const compressed = await compressImage(file);
+    const path = `${userId}/prop-${Date.now()}.jpg`;
+    const { error: err } = await supabase.storage.from('plant-photos').upload(path, compressed, { upsert: true, contentType: 'image/jpeg' });
     if (err) { setError(err.message); setUploading(false); return; }
     const { data } = supabase.storage.from('plant-photos').getPublicUrl(path);
     setPhotoUrl(data.publicUrl);

@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
 import { supabase } from '../lib/supabaseClient';
+import { compressImage } from '../lib/compressImage';
 import type { Plant } from '../types/plant';
 
 type Props = {
@@ -26,11 +27,11 @@ export default function AddEditPlant({ userId, plant, onSaved, onCancel }: Props
     setUploading(true);
     setError(null);
 
-    const ext = file.name.split('.').pop();
-    const path = `${userId}/${Date.now()}.${ext}`;
+    const compressed = await compressImage(file);
+    const path = `${userId}/${Date.now()}.jpg`;
     const { error: uploadErr } = await supabase.storage
       .from('plant-photos')
-      .upload(path, file, { upsert: true });
+      .upload(path, compressed, { upsert: true, contentType: 'image/jpeg' });
 
     if (uploadErr) {
       setError(uploadErr.message);
