@@ -59,6 +59,15 @@ export default function AddCoParent({ plantId, plantName, open, onClose, onAdded
             throw insertErr;
           }
         } else {
+          // Notify the added user
+          const { data: authData } = await supabase.auth.getUser();
+          const inviterName = String(authData.user?.user_metadata?.full_name ?? authData.user?.email ?? 'Someone');
+          await supabase.from('notifications').insert({
+            user_id: profile.id,
+            type: 'coparent_added',
+            title: inviterName + ' added you as co-parent',
+            body: 'You are now a co-parent of ' + plantName,
+          });
           setMsg("Added as co-parent!");
           onAdded?.(profile.id);
           setEmail("");

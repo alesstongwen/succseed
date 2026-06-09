@@ -86,6 +86,23 @@ export default function AcceptInvite({ inviteId }: Props) {
       .update({ accepted_at: new Date().toISOString(), accepted_by: userId })
       .eq('id', inviteId);
 
+    // Notify the plant owner
+    const { data: caretakers } = await supabase
+      .from('plant_caretakers')
+      .select('user_id, role')
+      .eq('plant_id', invite.plant_id);
+    const owner = (caretakers ?? []).find((c: any) => c.role === 'OWNER');
+    if (owner) {
+      const { data: authData } = await supabase.auth.getUser();
+      const accepterName = String(authData.user?.user_metadata?.full_name ?? authData.user?.email ?? 'Someone');
+      await supabase.from('notifications').insert({
+        user_id: owner.user_id,
+        type: 'coparent_accepted',
+        title: accepterName + ' accepted your invite',
+        body: 'They are now a co-parent of ' + (plantName ?? 'your plant'),
+      });
+    }
+
     setStatus('done');
     setTimeout(() => navigate('/plants'), 2000);
   }
