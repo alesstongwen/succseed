@@ -7,7 +7,6 @@ type Props = { userId: string };
 type DayActivity = {
   date: Date;
   plantPhotos: string[];
-  plantPhotos: string[];
   propPhotos: string[];
   hasPlantActivity: boolean;
   hasPropActivity: boolean;
@@ -30,11 +29,12 @@ export default function Journal({ userId }: Props) {
       const start = startOfMonth(month).toISOString();
       const end = endOfMonth(month).toISOString();
 
-      const [watering, fertilize, care, propUpdates] = await Promise.all([
+      const [watering, fertilize, care, propUpdates, plants] = await Promise.all([
         supabase.from('watering_logs').select('plant_id, watered_at, notes, plants(species, nickname)').gte('watered_at', start).lte('watered_at', end),
         supabase.from('fertilize_logs').select('plant_id, fertilized_at, fertilizer_name, plants(species, nickname)').gte('fertilized_at', start).lte('fertilized_at', end),
         supabase.from('care_logs').select('plant_id, logged_at, note, care_type, photo_url, plants(species, nickname)').gte('logged_at', start).lte('logged_at', end),
         supabase.from('propagation_updates').select('propagation_id, logged_at, notes, photo_url, stage, propagations(plant_id, plants(species, nickname))').gte('logged_at', start).lte('logged_at', end),
+        supabase.from('plants').select('species, nickname, photo_url, date_acquired').not('date_acquired', 'is', null).gte('date_acquired', start.split('T')[0]).lte('date_acquired', end.split('T')[0]),
       ]);
 
       const map = new Map<string, DayActivity>();
@@ -63,6 +63,11 @@ export default function Journal({ userId }: Props) {
         d.hasPropActivity = true;
         if (u.photo_url) d.propPhotos.push(u.photo_url);
       }
+      for (const p of (plants.data ?? []) as any[]) {
+        const d = getOrCreate(new Date(p.date_acquired));
+        d.hasPlantActivity = true;
+        if (p.photo_url) d.plantPhotos.push(p.photo_url);
+      }
 
       setActivity(map);
       setLoading(false);
@@ -74,11 +79,13 @@ export default function Journal({ userId }: Props) {
     const start = new Date(date); start.setHours(0, 0, 0, 0);
     const end = new Date(date); end.setHours(23, 59, 59, 999);
 
-    const [watering, fertilize, care, propUpdates] = await Promise.all([
+    const dateStr = format(date, 'yyyy-MM-dd');
+    const [watering, fertilize, care, propUpdates, acquired] = await Promise.all([
       supabase.from('watering_logs').select('watered_at, notes, amount_ml, plants(species, nickname)').gte('watered_at', start.toISOString()).lte('watered_at', end.toISOString()),
       supabase.from('fertilize_logs').select('fertilized_at, fertilizer_name, plants(species, nickname)').gte('fertilized_at', start.toISOString()).lte('fertilized_at', end.toISOString()),
       supabase.from('care_logs').select('logged_at, note, care_type, plants(species, nickname)').gte('logged_at', start.toISOString()).lte('logged_at', end.toISOString()),
       supabase.from('propagation_updates').select('logged_at, notes, photo_url, stage, propagations(plants(species, nickname))').gte('logged_at', start.toISOString()).lte('logged_at', end.toISOString()),
+      supabase.from('plants').select('species, nickname, photo_url, date_acquired').eq('date_acquired', dateStr),
     ]);
 
     const items: DayDetail['items'] = [];
@@ -99,6 +106,11 @@ export default function Journal({ userId }: Props) {
     for (const u of (propUpdates.data ?? []) as any[]) {
       const name = u.propagations?.plants?.nickname ?? u.propagations?.plants?.species ?? 'Cutting';
       items.push({ type: 'prop', label: `${name} — ${u.stage}`, note: u.notes ?? undefined, photo: u.photo_url ?? undefined, time: format(new Date(u.logged_at), 'h:mm a') });
+    }
+
+    for (const p of (acquired.data ?? []) as any[]) {
+      const name = p.nickname ?? p.species ?? 'Plant';
+      items.push({ type: 'plant', label: `${name} came home`, photo: p.photo_url ?? undefined, time: '' });
     }
 
     setSelected({ date, items });
