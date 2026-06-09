@@ -18,7 +18,7 @@ serve(async (req) => {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        from: 'Succseed <noreply@succseed.app>',
+        from: 'Succseed <onboarding@resend.dev>',
         to: inviteeEmail,
         subject: `${inviterName} invited you to co-parent ${plantName}`,
         html: `
