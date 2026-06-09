@@ -35,18 +35,18 @@ export default function AcceptInvite({ inviteId }: Props) {
     if (status !== 'ready') return;
 
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) processInvite(session.user.id, session.user.email ?? '');
+      if (session?.user) processInvite(session.user.id);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user && status === 'ready') {
-        processInvite(session.user.id, session.user.email ?? '');
+        processInvite(session.user.id);
       }
     });
     return () => subscription.unsubscribe();
   }, [status]);
 
-  async function processInvite(userId: string, userEmail: string) {
+  async function processInvite(userId: string) {
     setStatus('processing');
 
     // Re-fetch to get plant_id and check it matches the invited email (or allow any)

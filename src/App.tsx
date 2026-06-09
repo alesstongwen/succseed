@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from './hooks/useAuth';
 import { supabase } from './lib/supabaseClient';
 import Auth from './components/Auth';
@@ -21,29 +21,13 @@ function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="pb-16">
       {children}
-      <BottomNav active={tab} onChange={(t) => navigate(`/${t === 'plants' ? 'plants' : t}`)} />
+      <BottomNav active={tab} onChange={(t) => navigate(`/${t}`)} />
     </div>
   );
 }
 
-function ProtectedRoutes({ userId, userName }: { userId: string; userName: string | null }) {
-  return (
-    <Layout>
-      <Routes>
-        <Route path="/" element={<Navigate to="/plants" replace />} />
-        <Route path="/plants" element={<PlantList userId={userId} userName={userName} onSignOut={() => supabase.auth.signOut()} />} />
-        <Route path="/plants/:id" element={<PlantDetailWrapper userId={userId} />} />
-        <Route path="/propagations" element={<PropagationList userId={userId} />} />
-        <Route path="/propagations/:id" element={<PropagationDetailWrapper userId={userId} />} />
-        <Route path="/journal" element={<Journal userId={userId} />} />
-        <Route path="*" element={<Navigate to="/plants" replace />} />
-      </Routes>
-    </Layout>
-  );
-}
-
 function PlantDetailWrapper({ userId }: { userId: string }) {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   return (
     <PlantDetail
@@ -56,7 +40,7 @@ function PlantDetailWrapper({ userId }: { userId: string }) {
 }
 
 function PropagationDetailWrapper({ userId }: { userId: string }) {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   return (
     <PropagationDetail
@@ -68,14 +52,8 @@ function PropagationDetailWrapper({ userId }: { userId: string }) {
 }
 
 function AcceptInviteWrapper() {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   return <AcceptInvite inviteId={id!} />;
-}
-
-function useParams() {
-  const location = useLocation();
-  const parts = location.pathname.split('/');
-  return { id: parts[parts.length - 1] };
 }
 
 export default function App() {
@@ -84,7 +62,7 @@ export default function App() {
   const location = useLocation();
 
   useEffect(() => {
-    if (!loading && !user && location.pathname !== '/login') {
+    if (!loading && !user && !location.pathname.startsWith('/accept-invite') && location.pathname !== '/login') {
       navigate('/login', { replace: true });
     }
     if (!loading && user && location.pathname === '/login') {
@@ -100,7 +78,6 @@ export default function App() {
     );
   }
 
-  // Allow invite pages to render without auth
   if (!user) {
     return (
       <Routes>
@@ -113,9 +90,18 @@ export default function App() {
   const userName = user.user_metadata?.full_name ?? user.email ?? null;
 
   return (
-    <Routes>
-      <Route path="/accept-invite/:id" element={<AcceptInviteWrapper />} />
-      <Route path="*" element={<ProtectedRoutes userId={user.id} userName={userName} />} />
-    </Routes>
+    <Layout>
+      <Routes>
+        <Route path="/" element={<Navigate to="/plants" replace />} />
+        <Route path="/login" element={<Navigate to="/plants" replace />} />
+        <Route path="/plants" element={<PlantList userId={user.id} userName={userName} onSignOut={() => supabase.auth.signOut()} />} />
+        <Route path="/plants/:id" element={<PlantDetailWrapper userId={user.id} />} />
+        <Route path="/propagations" element={<PropagationList userId={user.id} />} />
+        <Route path="/propagations/:id" element={<PropagationDetailWrapper userId={user.id} />} />
+        <Route path="/journal" element={<Journal userId={user.id} />} />
+        <Route path="/accept-invite/:id" element={<AcceptInviteWrapper />} />
+        <Route path="*" element={<Navigate to="/plants" replace />} />
+      </Routes>
+    </Layout>
   );
 }

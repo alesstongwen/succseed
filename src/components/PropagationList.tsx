@@ -1,8 +1,8 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { format, differenceInDays } from 'date-fns';
+import { differenceInDays } from 'date-fns';
 import { supabase } from '../lib/supabaseClient';
-import type { Propagation, PropagationStage, PropagationMethod } from '../types/plant';
+import type { Propagation, PropagationStage } from '../types/plant';
 import AddPropagation from './AddPropagation';
 
 type Props = { userId: string };
