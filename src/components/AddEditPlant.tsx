@@ -15,6 +15,7 @@ export default function AddEditPlant({ userId, plant, onSaved, onCancel }: Props
   const [species, setSpecies] = useState(plant?.species ?? '');
   const [nickname, setNickname] = useState(plant?.nickname ?? '');
   const [dateAcquired, setDateAcquired] = useState(plant?.date_acquired ?? '');
+  const [wateringInterval, setWateringInterval] = useState(plant?.watering_interval_days?.toString() ?? '');
   const [photoUrl, setPhotoUrl] = useState(plant?.photo_url ?? '');
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -54,6 +55,7 @@ export default function AddEditPlant({ userId, plant, onSaved, onCancel }: Props
       species: species.trim(),
       nickname: nickname.trim() || null,
       date_acquired: dateAcquired || null,
+      watering_interval_days: wateringInterval ? parseInt(wateringInterval) : null,
       photo_url: photoUrl || null,
       updated_at: new Date().toISOString(),
     };
@@ -152,6 +154,20 @@ export default function AddEditPlant({ userId, plant, onSaved, onCancel }: Props
               onChange={(e) => setDateAcquired(e.target.value)}
               className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-leaf-400"
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-stone-700 mb-1">Water every (days)</label>
+            <input
+              type="number"
+              min="1"
+              max="365"
+              placeholder="e.g. 7"
+              value={wateringInterval}
+              onChange={(e) => setWateringInterval(e.target.value)}
+              className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-leaf-400"
+            />
+            <p className="text-xs text-stone-400 mt-1">Leave blank if you prefer no reminder</p>
           </div>
 
           {error && (

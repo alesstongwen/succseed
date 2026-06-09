@@ -5,6 +5,7 @@ export interface Plant {
   nickname: string | null;
   photo_url: string | null;
   date_acquired: string | null;
+  watering_interval_days: number | null;
   created_at: string;
   updated_at: string;
   caretakers?: Caretaker[];
