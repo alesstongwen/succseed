@@ -26,15 +26,20 @@ export default function PlantDetail({ plantId, userId, onBack, onDeleted }: Prop
   const [showInvite, setShowInvite] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  const todayStr = format(new Date(), 'yyyy-MM-dd');
+
   // Quick-log state
   const [waterNote, setWaterNote] = useState('');
   const [waterIntensity, setWaterIntensity] = useState<'misting' | 'light' | 'normal' | 'soaked'>('normal');
+  const [waterDate, setWaterDate] = useState(todayStr);
   const [fertNote, setFertNote] = useState('');
   const [fertName, setFertName] = useState('');
   const [fertAmount, setFertAmount] = useState('');
+  const [fertDate, setFertDate] = useState(todayStr);
   const [careNote, setCareNote] = useState('');
   const [careType, setCareType] = useState(CARE_TYPES[0]);
   const [carePhoto, setCarePhoto] = useState('');
+  const [careDate, setCareDate] = useState(todayStr);
   const [careUploading, setCareUploading] = useState(false);
   const [logSaving, setLogSaving] = useState(false);
   const careFileRef = useRef<HTMLInputElement>(null);
@@ -106,9 +111,11 @@ export default function PlantDetail({ plantId, userId, onBack, onDeleted }: Prop
       watered_by: userId,
       notes: waterNote.trim() || null,
       amount_ml: intensityToMl[waterIntensity],
+      watered_at: new Date(waterDate).toISOString(),
     });
     setWaterNote('');
     setWaterIntensity('normal');
+    setWaterDate(todayStr);
     await loadLogs();
     setLogSaving(false);
   }
@@ -121,10 +128,12 @@ export default function PlantDetail({ plantId, userId, onBack, onDeleted }: Prop
       notes: fertNote.trim() || null,
       fertilizer_name: fertName.trim() || null,
       amount_ml: fertAmount ? parseInt(fertAmount) : null,
+      fertilized_at: new Date(fertDate).toISOString(),
     });
     setFertNote('');
     setFertName('');
     setFertAmount('');
+    setFertDate(todayStr);
     await loadLogs();
     setLogSaving(false);
   }
@@ -151,9 +160,11 @@ export default function PlantDetail({ plantId, userId, onBack, onDeleted }: Prop
       note: careNote.trim(),
       care_type: careType,
       photo_url: carePhoto || null,
+      logged_at: new Date(careDate).toISOString(),
     });
     setCareNote('');
     setCarePhoto('');
+    setCareDate(todayStr);
     await loadLogs();
     setLogSaving(false);
   }
@@ -347,6 +358,16 @@ export default function PlantDetail({ plantId, userId, onBack, onDeleted }: Prop
                 rows={2}
                 className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-leaf-400 resize-none"
               />
+              <div>
+                <label className="block text-xs text-stone-400 mb-1">Date</label>
+                <input
+                  type="date"
+                  value={waterDate}
+                  max={todayStr}
+                  onChange={(e) => setWaterDate(e.target.value)}
+                  className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-leaf-400"
+                />
+              </div>
               <button
                 onClick={logWatering}
                 disabled={logSaving}
@@ -410,6 +431,16 @@ export default function PlantDetail({ plantId, userId, onBack, onDeleted }: Prop
                 rows={2}
                 className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-leaf-400 resize-none"
               />
+              <div>
+                <label className="block text-xs text-stone-400 mb-1">Date</label>
+                <input
+                  type="date"
+                  value={fertDate}
+                  max={todayStr}
+                  onChange={(e) => setFertDate(e.target.value)}
+                  className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-leaf-400"
+                />
+              </div>
               <button
                 onClick={logFertilize}
                 disabled={logSaving}
@@ -482,6 +513,16 @@ export default function PlantDetail({ plantId, userId, onBack, onDeleted }: Prop
                 rows={3}
                 className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-leaf-400 resize-none"
               />
+              <div>
+                <label className="block text-xs text-stone-400 mb-1">Date</label>
+                <input
+                  type="date"
+                  value={careDate}
+                  max={todayStr}
+                  onChange={(e) => setCareDate(e.target.value)}
+                  className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-leaf-400"
+                />
+              </div>
               <button
                 onClick={logCare}
                 disabled={logSaving || !careNote.trim()}
