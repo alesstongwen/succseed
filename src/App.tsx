@@ -9,6 +9,7 @@ import PropagationList from './components/PropagationList';
 import PropagationDetail from './components/PropagationDetail';
 import Journal from './components/Journal';
 import BottomNav from './components/BottomNav';
+import AcceptInvite from './components/AcceptInvite';
 
 function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
@@ -66,6 +67,11 @@ function PropagationDetailWrapper({ userId }: { userId: string }) {
   );
 }
 
+function AcceptInviteWrapper() {
+  const { id } = useParams();
+  return <AcceptInvite inviteId={id!} />;
+}
+
 function useParams() {
   const location = useLocation();
   const parts = location.pathname.split('/');
@@ -94,9 +100,22 @@ export default function App() {
     );
   }
 
-  if (!user) return <Auth />;
+  // Allow invite pages to render without auth
+  if (!user) {
+    return (
+      <Routes>
+        <Route path="/accept-invite/:id" element={<AcceptInviteWrapper />} />
+        <Route path="*" element={<Auth />} />
+      </Routes>
+    );
+  }
 
   const userName = user.user_metadata?.full_name ?? user.email ?? null;
 
-  return <ProtectedRoutes userId={user.id} userName={userName} />;
+  return (
+    <Routes>
+      <Route path="/accept-invite/:id" element={<AcceptInviteWrapper />} />
+      <Route path="*" element={<ProtectedRoutes userId={user.id} userName={userName} />} />
+    </Routes>
+  );
 }
