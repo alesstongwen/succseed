@@ -12,45 +12,43 @@ serve(async (req) => {
     const { species } = await req.json()
     if (!species) throw new Error('species is required')
 
-    // Search Wikipedia for the species
+    // Always use search API first to find the most relevant plant page
     const searchRes = await fetch(
-      `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(species)}`,
+      `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(species + ' plant species')}&format=json&srlimit=3`,
       { headers: { 'User-Agent': 'Succseed/1.0 (plant care app)' } }
     )
+    const searchData = await searchRes.json()
+    const results = searchData?.query?.search ?? []
 
-    if (!searchRes.ok) {
-      // Try search API as fallback
-      const fallbackRes = await fetch(
-        `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(species + ' plant')}&format=json&srlimit=1`,
-        { headers: { 'User-Agent': 'Succseed/1.0 (plant care app)' } }
-      )
-      const fallback = await fallbackRes.json()
-      const title = fallback?.query?.search?.[0]?.title
-      if (!title) return new Response(JSON.stringify({ result: null }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    // Pick the first result that looks plant-related
+    const plantKeywords = ['plant', 'tree', 'shrub', 'flower', 'maple', 'species', 'cultivar', 'herb', 'fern', 'succulent', 'cactus', 'genus']
+    const best = results.find((r: any) =>
+      plantKeywords.some(k => r.title.toLowerCase().includes(k) || r.snippet.toLowerCase().includes(k))
+    ) ?? results[0]
 
-      const summaryRes = await fetch(
-        `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`,
-        { headers: { 'User-Agent': 'Succseed/1.0 (plant care app)' } }
-      )
-      const summary = await summaryRes.json()
-      return new Response(JSON.stringify({
-        result: {
-          commonName: summary.title ?? null,
-          description: summary.extract ?? null,
-          thumbnail: summary.thumbnail?.source ?? null,
-          suggestedDays: null,
-          watering: null,
-        }
-      }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
-    }
+    if (!best) return new Response(JSON.stringify({ result: null }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    })
 
-    const data = await searchRes.json()
+    // Fetch the summary for the best match
+    const summaryRes = await fetch(
+      `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(best.title)}`,
+      { headers: { 'User-Agent': 'Succseed/1.0 (plant care app)' } }
+    )
+    const summary = await summaryRes.json()
+
+    // Only return if it looks like a plant article
+    const extract = summary.extract ?? ''
+    const isPlant = plantKeywords.some(k => extract.toLowerCase().includes(k))
+    if (!isPlant) return new Response(JSON.stringify({ result: null }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    })
 
     return new Response(JSON.stringify({
       result: {
-        commonName: data.title ?? null,
-        description: data.extract ?? null,
-        thumbnail: data.thumbnail?.source ?? null,
+        commonName: summary.title ?? null,
+        description: extract.length > 300 ? extract.slice(0, 300) + '...' : extract,
+        thumbnail: summary.thumbnail?.source ?? null,
         suggestedDays: null,
         watering: null,
       }
