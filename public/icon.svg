@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="100" fill="#f0fdf4"/>
+  <!-- stem -->
+  <line x1="256" y1="380" x2="256" y2="200" stroke="#4d7c0f" stroke-width="18" stroke-linecap="round"/>
+  <!-- left leaf -->
+  <path d="M256 300 C200 280 160 220 170 160 C200 200 230 250 256 260" fill="#4d7c0f"/>
+  <!-- right leaf -->
+  <path d="M256 260 C280 220 330 190 360 155 C350 215 310 265 256 300" fill="#65a30d"/>
+  <!-- top leaf -->
+  <path d="M256 200 C240 150 245 100 256 80 C267 100 272 150 256 200" fill="#84cc16"/>
+  <!-- soil pot -->
+  <path d="M200 390 Q200 420 256 420 Q312 420 312 390 Z" fill="#a16207"/>
+  <rect x="190" y="380" width="132" height="16" rx="8" fill="#92400e"/>
+</svg>
