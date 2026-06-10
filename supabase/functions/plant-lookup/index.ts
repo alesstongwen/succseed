@@ -12,37 +12,50 @@ serve(async (req) => {
     const { species } = await req.json()
     if (!species) throw new Error('species is required')
 
-    const apiKey = Deno.env.get('PERENUAL_API_KEY')
-    if (!apiKey) throw new Error('PERENUAL_API_KEY not set')
-
-    const res = await fetch(
-      `https://perenual.com/api/species-list?key=${apiKey}&q=${encodeURIComponent(species)}&page=1`,
+    // Search Wikipedia for the species
+    const searchRes = await fetch(
+      `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(species)}`,
+      { headers: { 'User-Agent': 'Succseed/1.0 (plant care app)' } }
     )
-    if (!res.ok) throw new Error('Perenual API error')
 
-    const json = await res.json()
-    const plant = json.data?.[0]
-    if (!plant) return new Response(JSON.stringify({ result: null }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    if (!searchRes.ok) {
+      // Try search API as fallback
+      const fallbackRes = await fetch(
+        `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(species + ' plant')}&format=json&srlimit=1`,
+        { headers: { 'User-Agent': 'Succseed/1.0 (plant care app)' } }
+      )
+      const fallback = await fallbackRes.json()
+      const title = fallback?.query?.search?.[0]?.title
+      if (!title) return new Response(JSON.stringify({ result: null }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
 
-    // Map Perenual watering frequency to days
-    const wateringMap: Record<string, number> = {
-      'frequent': 2,
-      'average': 7,
-      'minimum': 14,
-      'none': 30,
+      const summaryRes = await fetch(
+        `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`,
+        { headers: { 'User-Agent': 'Succseed/1.0 (plant care app)' } }
+      )
+      const summary = await summaryRes.json()
+      return new Response(JSON.stringify({
+        result: {
+          commonName: summary.title ?? null,
+          description: summary.extract ?? null,
+          thumbnail: summary.thumbnail?.source ?? null,
+          suggestedDays: null,
+          watering: null,
+        }
+      }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
-    const wateringRaw = (plant.watering ?? '').toLowerCase()
-    const suggestedDays = wateringMap[wateringRaw] ?? null
+
+    const data = await searchRes.json()
 
     return new Response(JSON.stringify({
       result: {
-        commonName: plant.common_name ?? null,
-        description: plant.description ?? null,
-        watering: plant.watering ?? null,
-        suggestedDays,
-        thumbnail: plant.default_image?.thumbnail ?? null,
+        commonName: data.title ?? null,
+        description: data.extract ?? null,
+        thumbnail: data.thumbnail?.source ?? null,
+        suggestedDays: null,
+        watering: null,
       }
     }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+
   } catch (e: any) {
     return new Response(JSON.stringify({ error: e.message }), {
       status: 500,
