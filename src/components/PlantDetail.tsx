@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { format, formatDistanceToNow } from 'date-fns';
 import { supabase } from '../lib/supabaseClient';
+import { compressImage } from '../lib/compressImage';
 import type { Plant, WateringLog, FertilizeLog, CareLog } from '../types/plant';
 import AddEditPlant from './AddEditPlant';
 import AddCoParent from './AddCoParentModel';
@@ -142,8 +143,9 @@ export default function PlantDetail({ plantId, userId, onBack, onDeleted }: Prop
     const file = e.target.files?.[0];
     if (!file) return;
     setCareUploading(true);
-    const path = `${userId}/care-${Date.now()}.${file.name.split('.').pop()}`;
-    const { error } = await supabase.storage.from('plant-photos').upload(path, file, { upsert: true });
+    const compressed = await compressImage(file);
+    const path = `${userId}/care-${Date.now()}.jpg`;
+    const { error } = await supabase.storage.from('plant-photos').upload(path, compressed, { upsert: true, contentType: 'image/jpeg' });
     if (!error) {
       const { data } = supabase.storage.from('plant-photos').getPublicUrl(path);
       setCarePhoto(data.publicUrl);
