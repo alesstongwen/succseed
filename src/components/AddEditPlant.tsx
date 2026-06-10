@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { compressImage } from '../lib/compressImage';
 import type { Plant } from '../types/plant';
@@ -8,14 +8,6 @@ type Props = {
   plant?: Plant;
   onSaved: (plant: Plant) => void;
   onCancel: () => void;
-};
-
-type PlantSuggestion = {
-  commonName: string | null;
-  description: string | null;
-  watering: string | null;
-  suggestedDays: number | null;
-  thumbnail: string | null;
 };
 
 export default function AddEditPlant({ userId, plant, onSaved, onCancel }: Props) {
@@ -28,30 +20,7 @@ export default function AddEditPlant({ userId, plant, onSaved, onCancel }: Props
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [suggestion, setSuggestion] = useState<PlantSuggestion | null>(null);
-  const [lookingUp, setLookingUp] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
-  const lookupTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // Debounced species lookup
-  useEffect(() => {
-    if (lookupTimer.current) clearTimeout(lookupTimer.current);
-    setSuggestion(null);
-    if (species.trim().length < 3) return;
-
-    lookupTimer.current = setTimeout(async () => {
-      setLookingUp(true);
-      try {
-        const { data, error } = await supabase.functions.invoke('plant-lookup', {
-          body: { species: species.trim() },
-        });
-        if (!error && data?.result) setSuggestion(data.result);
-      } catch (_) {}
-      setLookingUp(false);
-    }, 800);
-
-    return () => { if (lookupTimer.current) clearTimeout(lookupTimer.current); };
-  }, [species]);
 
   async function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -114,7 +83,6 @@ export default function AddEditPlant({ userId, plant, onSaved, onCancel }: Props
         </div>
 
         <form onSubmit={handleSubmit} className="p-5 space-y-4 max-h-[80vh] overflow-y-auto">
-          {/* Photo */}
           <div className="flex flex-col items-center gap-2">
             <div onClick={() => fileRef.current?.click()}
               className="w-28 h-28 rounded-2xl bg-stone-100 border-2 border-dashed border-stone-300 flex items-center justify-center cursor-pointer hover:bg-stone-50 overflow-hidden">
@@ -129,52 +97,12 @@ export default function AddEditPlant({ userId, plant, onSaved, onCancel }: Props
             <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} />
           </div>
 
-          {/* Species */}
           <div>
             <label className="block text-sm font-medium text-stone-700 mb-1">Species <span className="text-red-400">*</span></label>
-            <input
-              value={species}
-              onChange={(e) => setSpecies(e.target.value)}
-              placeholder="e.g. Monstera deliciosa"
-              required
-              className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-leaf-400"
-            />
-            {lookingUp && <p className="text-xs text-stone-400 mt-1">Looking up plant info...</p>}
+            <input value={species} onChange={(e) => setSpecies(e.target.value)}
+              placeholder="e.g. Monstera deliciosa" required
+              className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-leaf-400" />
           </div>
-
-          {/* Suggestion card */}
-          {suggestion && (
-            <div className="rounded-xl border border-leaf-200 bg-leaf-50 p-3 space-y-2">
-              <div className="flex gap-3">
-                {suggestion.thumbnail && (
-                  <img src={suggestion.thumbnail} alt="" className="w-14 h-14 rounded-lg object-cover flex-shrink-0" />
-                )}
-                <div className="min-w-0">
-                  {suggestion.commonName && (
-                    <p className="text-xs font-semibold text-leaf-700 truncate">{suggestion.commonName}</p>
-                  )}
-                  {suggestion.description && (
-                    <p className="text-xs text-stone-500 mt-0.5 line-clamp-3">{suggestion.description}</p>
-                  )}
-                </div>
-              </div>
-              {suggestion.suggestedDays && (
-                <div className="flex items-center justify-between pt-1 border-t border-leaf-200">
-                  <p className="text-xs text-stone-600">
-                    Suggested watering: <span className="font-semibold">every {suggestion.suggestedDays} days</span>
-                    <span className="text-stone-400"> ({suggestion.watering})</span>
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => setWateringInterval(suggestion.suggestedDays!.toString())}
-                    className="text-xs bg-leaf-600 text-white px-3 py-1 rounded-full hover:bg-leaf-700 ml-2 flex-shrink-0"
-                  >
-                    Use this
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
 
           <div>
             <label className="block text-sm font-medium text-stone-700 mb-1">Nickname</label>
