@@ -10,6 +10,7 @@ import PropagationDetail from './components/PropagationDetail';
 import Journal from './components/Journal';
 import BottomNav from './components/BottomNav';
 import AcceptInvite from './components/AcceptInvite';
+import InstallPrompt from './components/InstallPrompt';
 
 function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
@@ -91,6 +92,7 @@ export default function App() {
 
   return (
     <Layout>
+      <InstallPrompt />
       <Routes>
         <Route path="/" element={<Navigate to="/plants" replace />} />
         <Route path="/login" element={<Navigate to="/plants" replace />} />
