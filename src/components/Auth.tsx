@@ -15,7 +15,7 @@ export default function Auth() {
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: window.location.origin,
+        emailRedirectTo: `${window.location.origin}/plants`,
       },
     });
 
@@ -42,7 +42,7 @@ export default function Auth() {
               <div className="text-4xl mb-3 text-leaf-400">✉</div>
               <h2 className="font-semibold text-stone-800 mb-2">Check your email</h2>
               <p className="text-stone-500 text-sm">
-                We sent a magic link to <span className="font-medium text-stone-700">{email}</span>. Tap it to sign in — no password needed.
+                We sent a magic link to <span className="font-medium text-stone-700">{email}</span>. Tap it to sign in, then come back to the app — you will be logged in automatically.
               </p>
               <button
                 onClick={() => { setSent(false); setEmail(''); }}
