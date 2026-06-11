@@ -20,32 +20,48 @@ export default function PlantList({ userId, userName, onSignOut }: Props) {
   const [adding, setAdding] = useState(false);
 
   const loadPlants = useCallback(async () => {
-    const { data } = await supabase
+    const { data: myRows } = await supabase
       .from('plant_caretakers')
-      .select(`plant_id, plants(*, plant_caretakers(user_id, profiles(id, full_name, email, avatar_url)))`)
+      .select('plant_id, plants(*)')
       .eq('user_id', userId);
 
-    if (!data) { setLoading(false); return; }
+    if (!myRows) { setLoading(false); return; }
 
-    const plantList: Plant[] = (data as any[])
-      .map((row) => {
-        if (!row.plants) return null;
-        const p = row.plants;
-        const caretakers = (p.plant_caretakers ?? []).map((pc: any) => ({
-          id: pc.profiles?.id ?? pc.user_id,
-          name: pc.profiles?.full_name ?? null,
-          email: pc.profiles?.email ?? null,
-          avatar_url: pc.profiles?.avatar_url ?? null,
-        }));
-        return { ...p, caretakers };
-      })
+    const plantList: Plant[] = (myRows as any[])
+      .map((row) => row.plants)
       .filter(Boolean) as Plant[];
 
-    setPlants(plantList);
+    if (plantList.length === 0) { setPlants([]); setLoading(false); return; }
+
+    // Fetch all caretakers for these plants in one query (avoids nested
+    // self-referential RLS join that caused only the current user's row to show)
+    const plantIds = plantList.map((p) => p.id);
+    const { data: allCaretakers } = await supabase
+      .from('plant_caretakers')
+      .select('plant_id, user_id, profiles(id, full_name, email, avatar_url)')
+      .in('plant_id', plantIds);
+
+    const caretakersByPlant: Record<string, any[]> = {};
+    for (const pc of (allCaretakers ?? []) as any[]) {
+      if (!caretakersByPlant[pc.plant_id]) caretakersByPlant[pc.plant_id] = [];
+      caretakersByPlant[pc.plant_id].push({
+        id: pc.profiles?.id ?? pc.user_id,
+        name: pc.profiles?.full_name ?? null,
+        email: pc.profiles?.email ?? null,
+        avatar_url: pc.profiles?.avatar_url ?? null,
+      });
+    }
+
+    const plantListWithCaretakers = plantList.map((p) => ({
+      ...p,
+      caretakers: caretakersByPlant[p.id] ?? [],
+    }));
+
+    setPlants(plantListWithCaretakers);
 
     // Fetch last watering for each plant
-    if (plantList.length > 0) {
-      const ids = plantList.map((p) => p.id);
+    if (plantListWithCaretakers.length > 0) {
+      const ids = plantListWithCaretakers.map((p) => p.id);
       const { data: wData } = await supabase
         .from('watering_logs')
         .select('*')
