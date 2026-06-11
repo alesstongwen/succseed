@@ -31,7 +31,6 @@ function wateringStatus(plant: Plant, lastWatering?: WateringLog): { gradient: s
 export default function PlantCard({ plant, lastWatering, onClick }: Props) {
   const displayName = plant.nickname || plant.species;
   const subName = plant.nickname ? plant.species : null;
-  const sharedCount = plant.caretakers ? plant.caretakers.length : 0;
   const { gradient, label, overdue } = wateringStatus(plant, lastWatering);
 
   return (
@@ -44,11 +43,6 @@ export default function PlantCard({ plant, lastWatering, onClick }: Props) {
           <img src={plant.photo_url} alt={displayName} className="w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-5xl text-leaf-400">✿</div>
-        )}
-        {sharedCount > 1 && (
-          <div className="absolute top-2 right-2 bg-white/90 rounded-full px-2 py-0.5 text-xs text-stone-600">
-            {sharedCount} people
-          </div>
         )}
         {overdue && (
           <div className="absolute bottom-2 left-2 bg-red-500 text-white text-xs font-semibold rounded-full px-2 py-0.5">
