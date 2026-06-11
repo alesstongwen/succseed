@@ -46,20 +46,22 @@ export default function PlantDetail({ plantId, userId, onBack, onDeleted }: Prop
   const careFileRef = useRef<HTMLInputElement>(null);
 
   const loadPlant = useCallback(async () => {
-    const { data } = await supabase
-      .from('plants')
-      .select(`*, plant_caretakers(user_id, role, profiles(id, full_name, email, avatar_url))`)
-      .eq('id', plantId)
-      .single();
+    const [plantRes, caretakersRes] = await Promise.all([
+      supabase.from('plants').select('*').eq('id', plantId).single(),
+      supabase
+        .from('plant_caretakers')
+        .select('user_id, role, profiles(id, full_name, email, avatar_url)')
+        .eq('plant_id', plantId),
+    ]);
 
-    if (data) {
-      const caretakers = (data.plant_caretakers ?? []).map((pc: any) => ({
+    if (plantRes.data) {
+      const caretakers = (caretakersRes.data ?? []).map((pc: any) => ({
         id: pc.profiles?.id ?? pc.user_id,
         name: pc.profiles?.full_name ?? null,
         email: pc.profiles?.email ?? null,
         avatar_url: pc.profiles?.avatar_url ?? null,
       }));
-      setPlant({ ...data, caretakers });
+      setPlant({ ...plantRes.data, caretakers });
     }
     setLoading(false);
   }, [plantId]);
