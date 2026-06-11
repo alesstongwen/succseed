@@ -64,7 +64,7 @@ export default function Journal({ userId }: Props) {
         if (u.photo_url) d.propPhotos.push(u.photo_url);
       }
       for (const p of (plants.data ?? []) as any[]) {
-        const d = getOrCreate(new Date(p.date_acquired));
+        const d = getOrCreate(new Date(p.date_acquired + 'T12:00:00'));
         d.hasPlantActivity = true;
         if (p.photo_url) d.plantPhotos.push(p.photo_url);
       }

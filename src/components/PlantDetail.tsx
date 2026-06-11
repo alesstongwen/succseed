@@ -283,7 +283,7 @@ export default function PlantDetail({ plantId, userId, onBack, onDeleted }: Prop
               <InfoRow label="Species" value={plant.species} />
               {plant.nickname && <InfoRow label="Nickname" value={plant.nickname} />}
               {plant.date_acquired && (
-                <InfoRow label="Home since" value={format(new Date(plant.date_acquired), 'MMMM d, yyyy')} />
+                <InfoRow label="Home since" value={format(new Date(plant.date_acquired + 'T12:00:00'), 'MMMM d, yyyy')} />
               )}
               {wateringLogs[0] && (
                 <InfoRow
