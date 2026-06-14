@@ -1,0 +1,3 @@
+[auth.email.template.magic_link]
+subject = "Your Succseed sign-in code"
+content_path = "./supabase/email-templates/magic-link.html"
