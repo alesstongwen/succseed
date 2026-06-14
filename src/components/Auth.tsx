@@ -92,7 +92,7 @@ export default function Auth() {
 
                 <button
                   type="submit"
-                  disabled={verifying || otp.length !== 6}
+                  disabled={verifying || otp.length !== 8}
                   className="w-full bg-leaf-600 hover:bg-leaf-700 text-white font-medium py-2 rounded-lg transition-colors disabled:opacity-50"
                 >
                   {verifying ? 'Signing in...' : 'Sign in'}
