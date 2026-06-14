@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+</head>
+<body style="margin:0;padding:0;background:#fafaf9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#fafaf9;padding:40px 16px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e7e5e4;">
+
+          <!-- Header -->
+          <tr>
+            <td align="center" style="padding:32px 32px 24px;background:#f0fdf4;border-bottom:1px solid #dcfce7;">
+              <div style="font-size:40px;margin-bottom:8px;">✿</div>
+              <h1 style="margin:0;font-size:22px;font-weight:700;color:#3f6212;">Succseed</h1>
+              <p style="margin:4px 0 0;font-size:13px;color:#65a30d;">Your shared plant journal</p>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding:32px;">
+              <p style="margin:0 0 8px;font-size:15px;color:#44403c;">Your sign-in code is:</p>
+
+              <!-- OTP code box -->
+              <div style="background:#f0fdf4;border:2px solid #bbf7d0;border-radius:12px;padding:20px;text-align:center;margin:16px 0;">
+                <span style="font-size:40px;font-weight:800;letter-spacing:10px;color:#3f6212;font-family:'Courier New',monospace;">{{ .Token }}</span>
+              </div>
+
+              <p style="margin:0 0 24px;font-size:13px;color:#78716c;">
+                Enter this 8-digit code in the Succseed app. It expires in <strong>10 minutes</strong>.
+              </p>
+
+              <!-- Divider -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0;">
+                <tr>
+                  <td style="border-top:1px solid #e7e5e4;"></td>
+                  <td style="padding:0 12px;white-space:nowrap;font-size:12px;color:#a8a29e;">or</td>
+                  <td style="border-top:1px solid #e7e5e4;"></td>
+                </tr>
+              </table>
+
+              <p style="margin:0 0 12px;font-size:13px;color:#78716c;">Sign in directly in your browser:</p>
+              <a href="{{ .ConfirmationURL }}"
+                 style="display:block;text-align:center;background:#4d7c0f;color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;padding:12px 24px;border-radius:10px;">
+                Open Succseed
+              </a>
+
+              <p style="margin:24px 0 0;font-size:12px;color:#a8a29e;">
+                If you didn't request this, you can safely ignore this email.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding:16px 32px;background:#fafaf9;border-top:1px solid #e7e5e4;">
+              <p style="margin:0;font-size:11px;color:#a8a29e;text-align:center;">Succseed · Your shared plant journal</p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
