@@ -31,7 +31,7 @@ export default function Auth() {
 
   async function handleVerifyOtp(e: React.FormEvent) {
     e.preventDefault();
-    if (otp.length !== 6) return;
+    if (otp.length !== 8) return;
     setVerifying(true);
     setError(null);
 
@@ -71,16 +71,16 @@ export default function Auth() {
               <form onSubmit={handleVerifyOtp} className="space-y-3">
                 <div>
                   <label className="block text-sm font-medium text-stone-700 mb-1">
-                    Enter the 6-digit code
+                    Enter the 8-digit code
                   </label>
                   <input
                     type="text"
                     inputMode="numeric"
                     pattern="[0-9]*"
-                    maxLength={6}
+                    maxLength={8}
                     value={otp}
                     onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
-                    placeholder="123456"
+                    placeholder="12345678"
                     autoFocus
                     className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm text-center tracking-widest text-lg focus:outline-none focus:ring-2 focus:ring-leaf-400"
                   />
