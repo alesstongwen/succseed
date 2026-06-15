@@ -114,7 +114,7 @@ export default function PlantDetail({ plantId, userId, onBack, onDeleted }: Prop
       watered_by: userId,
       notes: waterNote.trim() || null,
       amount_ml: intensityToMl[waterIntensity],
-      watered_at: new Date(waterDate).toISOString(),
+      watered_at: new Date(waterDate + 'T12:00:00').toISOString(),
     });
     setWaterNote('');
     setWaterIntensity('normal');
@@ -131,7 +131,7 @@ export default function PlantDetail({ plantId, userId, onBack, onDeleted }: Prop
       notes: fertNote.trim() || null,
       fertilizer_name: fertName.trim() || null,
       amount_ml: fertAmount ? parseInt(fertAmount) : null,
-      fertilized_at: new Date(fertDate).toISOString(),
+      fertilized_at: new Date(fertDate + 'T12:00:00').toISOString(),
     });
     setFertNote('');
     setFertName('');
@@ -164,7 +164,7 @@ export default function PlantDetail({ plantId, userId, onBack, onDeleted }: Prop
       note: careNote.trim(),
       care_type: careType,
       photo_url: carePhoto || null,
-      logged_at: new Date(careDate).toISOString(),
+      logged_at: new Date(careDate + 'T12:00:00').toISOString(),
     });
     setCareNote('');
     setCarePhoto('');
