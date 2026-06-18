@@ -55,7 +55,8 @@ export type PropagationMethod = 'leaf' | 'stem' | 'offset' | 'division' | 'water
 
 export interface Propagation {
   id: string;
-  plant_id: string;
+  plant_id: string | null;
+  source_species: string | null;
   owner_id: string;
   method: PropagationMethod;
   current_stage: PropagationStage;
