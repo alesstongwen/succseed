@@ -1,10 +1,11 @@
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { compressImage } from '../lib/compressImage';
-import type { Plant, PropagationMethod } from '../types/plant';
+import type { Plant, Propagation, PropagationMethod } from '../types/plant';
 
 type Props = {
   userId: string;
+  propagation?: Propagation;
   onSaved: () => void;
   onCancel: () => void;
 };
@@ -12,20 +13,21 @@ type Props = {
 const METHODS: PropagationMethod[] = ['leaf', 'stem', 'offset', 'division', 'water'];
 const OTHER = '__other__';
 
-export default function AddPropagation({ userId, onSaved, onCancel }: Props) {
+export default function AddPropagation({ userId, propagation, onSaved, onCancel }: Props) {
+  const isEdit = !!propagation;
   const [plants, setPlants] = useState<Plant[]>([]);
-  const [plantId, setPlantId] = useState('');
-  const [sourceSpecies, setSourceSpecies] = useState('');
-  const [method, setMethod] = useState<PropagationMethod>('stem');
-  const [dateTaken, setDateTaken] = useState(new Date().toISOString().split('T')[0]);
-  const [notes, setNotes] = useState('');
-  const [photoUrl, setPhotoUrl] = useState('');
+  const [plantId, setPlantId] = useState(propagation?.plant_id ?? OTHER);
+  const [sourceSpecies, setSourceSpecies] = useState(propagation?.source_species ?? '');
+  const [method, setMethod] = useState<PropagationMethod>(propagation?.method ?? 'stem');
+  const [dateTaken, setDateTaken] = useState(propagation?.date_taken ?? new Date().toISOString().split('T')[0]);
+  const [notes, setNotes] = useState(propagation?.notes ?? '');
+  const [photoUrl, setPhotoUrl] = useState(propagation?.photo_url ?? '');
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const isOther = plantId === OTHER;
+  const isOther = plantId === OTHER || plantId === null || plantId === '';
 
   useEffect(() => {
     supabase
@@ -35,8 +37,10 @@ export default function AddPropagation({ userId, onSaved, onCancel }: Props) {
       .then(({ data }) => {
         const list = (data ?? []).map((r: any) => r.plants).filter(Boolean) as Plant[];
         setPlants(list);
-        if (list.length > 0) setPlantId(list[0].id);
-        else setPlantId(OTHER);
+        if (!isEdit) {
+          if (list.length > 0 && !propagation?.plant_id) setPlantId(list[0].id);
+          else if (list.length === 0) setPlantId(OTHER);
+        }
       });
   }, [userId]);
 
@@ -55,29 +59,45 @@ export default function AddPropagation({ userId, onSaved, onCancel }: Props) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (isOther && !sourceSpecies.trim()) return;
+    const effectivelyOther = plantId === OTHER || plantId === '' || plantId === null;
+    if (effectivelyOther && !sourceSpecies.trim()) return;
     setSaving(true);
-    const { error: err } = await supabase.from('propagations').insert({
-      plant_id: isOther ? null : plantId,
-      source_species: isOther ? sourceSpecies.trim() : null,
-      owner_id: userId,
+
+    const payload = {
+      plant_id: effectivelyOther ? null : plantId,
+      source_species: effectivelyOther ? sourceSpecies.trim() : null,
       method,
-      current_stage: 'cutting',
       date_taken: dateTaken,
       notes: notes.trim() || null,
       photo_url: photoUrl || null,
-    });
-    if (err) { setError(err.message); setSaving(false); return; }
+    };
+
+    if (isEdit) {
+      const { error: err } = await supabase.from('propagations').update(payload).eq('id', propagation.id);
+      if (err) { setError(err.message); setSaving(false); return; }
+    } else {
+      const { data, error: err } = await supabase.from('propagations')
+        .insert({ ...payload, owner_id: userId, current_stage: 'cutting' })
+        .select().single();
+      if (err) { setError(err.message); setSaving(false); return; }
+      // Add owner as caretaker
+      await supabase.from('propagation_caretakers').insert({
+        propagation_id: data.id, user_id: userId, role: 'OWNER',
+      });
+    }
+
     onSaved();
   }
 
-  const canSubmit = isOther ? !!sourceSpecies.trim() : !!plantId;
+  const canSubmit = (plantId === OTHER || plantId === '' || plantId === null)
+    ? !!sourceSpecies.trim()
+    : !!plantId;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden">
         <div className="flex items-center justify-between px-5 py-4 border-b border-stone-100">
-          <h2 className="text-lg font-semibold text-stone-800">New propagation</h2>
+          <h2 className="text-lg font-semibold text-stone-800">{isEdit ? 'Edit propagation' : 'New propagation'}</h2>
           <button onClick={onCancel} className="text-stone-400 hover:text-stone-600 text-xl p-1">✕</button>
         </div>
         <form onSubmit={handleSubmit} className="p-5 space-y-4 max-h-[80vh] overflow-y-auto">
@@ -89,12 +109,17 @@ export default function AddPropagation({ userId, onSaved, onCancel }: Props) {
                 : <span className="text-sm text-purple-400">{uploading ? 'Uploading...' : 'Add photo'}</span>
               }
             </div>
+            {photoUrl && (
+              <button type="button" onClick={() => fileRef.current?.click()} className="text-xs text-purple-600 hover:underline">
+                Change photo
+              </button>
+            )}
             <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handlePhoto} />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-stone-700 mb-1">Parent plant</label>
-            <select value={plantId} onChange={(e) => setPlantId(e.target.value)}
+            <select value={plantId ?? OTHER} onChange={(e) => setPlantId(e.target.value)}
               className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400">
               {plants.map(p => <option key={p.id} value={p.id}>{p.nickname ?? p.species}</option>)}
               <option value={OTHER}>Other (not in my collection)</option>
@@ -149,7 +174,7 @@ export default function AddPropagation({ userId, onSaved, onCancel }: Props) {
             </button>
             <button type="submit" disabled={saving || uploading || !canSubmit}
               className="flex-1 bg-purple-600 hover:bg-purple-700 text-white py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50">
-              {saving ? 'Saving...' : 'Add propagation'}
+              {saving ? 'Saving...' : isEdit ? 'Save changes' : 'Add propagation'}
             </button>
           </div>
         </form>

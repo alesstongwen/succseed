@@ -26,11 +26,12 @@ export default function PropagationList({ userId }: Props) {
 
   const load = useCallback(async () => {
     const { data } = await supabase
-      .from('propagations')
-      .select('*, plants(species, nickname)')
-      .eq('owner_id', userId)
-      .order('date_taken', { ascending: false });
-    setPropagations((data ?? []) as Propagation[]);
+      .from('propagation_caretakers')
+      .select('propagation_id, propagations(*, plants(species, nickname))')
+      .eq('user_id', userId);
+    const list = (data ?? []).map((r: any) => r.propagations).filter(Boolean) as Propagation[];
+    list.sort((a, b) => new Date(b.date_taken).getTime() - new Date(a.date_taken).getTime());
+    setPropagations(list);
     setLoading(false);
   }, [userId]);
 
