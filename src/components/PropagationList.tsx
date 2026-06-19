@@ -99,7 +99,7 @@ export default function PropagationList({ userId }: Props) {
 }
 
 function PropagationCard({ prop, onClick }: { prop: Propagation; onClick: () => void }) {
-  const plantName = prop.plants?.nickname ?? prop.plants?.species ?? 'Unknown plant';
+  const plantName = prop.plants?.nickname ?? prop.plants?.species ?? prop.source_species ?? 'Unknown plant';
   const daysSince = differenceInDays(new Date(), new Date(prop.date_taken));
   const stageIdx = STAGE_ORDER.indexOf(prop.current_stage);
 

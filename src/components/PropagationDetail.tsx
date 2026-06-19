@@ -70,10 +70,10 @@ export default function PropagationDetail({ propagationId, userId, onBack }: Pro
   async function graduateToPlant() {
     if (!prop) return;
     if (!confirm('Graduate this propagation to a new plant in your collection?')) return;
-    const plantName = prop.plants?.nickname ?? prop.plants?.species ?? 'Propagation';
+    const plantName = prop.plants?.nickname ?? prop.plants?.species ?? prop.source_species ?? 'Propagation';
     const { data } = await supabase.from('plants').insert({
       owner_id: userId,
-      species: prop.plants?.species ?? 'Unknown',
+      species: prop.plants?.species ?? prop.source_species ?? 'Unknown',
       nickname: `${plantName} (prop)`,
       photo_url: prop.photo_url,
       date_acquired: new Date().toISOString().split('T')[0],
@@ -88,7 +88,7 @@ export default function PropagationDetail({ propagationId, userId, onBack }: Pro
   if (loading) return <div className="min-h-screen flex items-center justify-center"><div className="w-10 h-10 border-4 border-purple-600 border-t-transparent rounded-full animate-spin" /></div>;
   if (!prop) return <div className="p-6 text-center text-stone-500">Not found. <button onClick={onBack} className="text-purple-600 underline">Back</button></div>;
 
-  const plantName = prop.plants?.nickname ?? prop.plants?.species ?? 'Unknown';
+  const plantName = prop.plants?.nickname ?? prop.plants?.species ?? prop.source_species ?? 'Unknown';
   const daysSince = differenceInDays(new Date(), new Date(prop.date_taken));
 
   return (

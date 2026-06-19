@@ -10,11 +10,13 @@ type Props = {
 };
 
 const METHODS: PropagationMethod[] = ['leaf', 'stem', 'offset', 'division', 'water'];
+const OTHER = '__other__';
 
 export default function AddPropagation({ userId, onSaved, onCancel }: Props) {
   const [plants, setPlants] = useState<Plant[]>([]);
   const [plantId, setPlantId] = useState('');
-  const [method, setMethod] = useState<PropagationMethod>('leaf');
+  const [sourceSpecies, setSourceSpecies] = useState('');
+  const [method, setMethod] = useState<PropagationMethod>('stem');
   const [dateTaken, setDateTaken] = useState(new Date().toISOString().split('T')[0]);
   const [notes, setNotes] = useState('');
   const [photoUrl, setPhotoUrl] = useState('');
@@ -22,6 +24,8 @@ export default function AddPropagation({ userId, onSaved, onCancel }: Props) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  const isOther = plantId === OTHER;
 
   useEffect(() => {
     supabase
@@ -32,6 +36,7 @@ export default function AddPropagation({ userId, onSaved, onCancel }: Props) {
         const list = (data ?? []).map((r: any) => r.plants).filter(Boolean) as Plant[];
         setPlants(list);
         if (list.length > 0) setPlantId(list[0].id);
+        else setPlantId(OTHER);
       });
   }, [userId]);
 
@@ -50,10 +55,11 @@ export default function AddPropagation({ userId, onSaved, onCancel }: Props) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!plantId) return;
+    if (isOther && !sourceSpecies.trim()) return;
     setSaving(true);
     const { error: err } = await supabase.from('propagations').insert({
-      plant_id: plantId,
+      plant_id: isOther ? null : plantId,
+      source_species: isOther ? sourceSpecies.trim() : null,
       owner_id: userId,
       method,
       current_stage: 'cutting',
@@ -64,6 +70,8 @@ export default function AddPropagation({ userId, onSaved, onCancel }: Props) {
     if (err) { setError(err.message); setSaving(false); return; }
     onSaved();
   }
+
+  const canSubmit = isOther ? !!sourceSpecies.trim() : !!plantId;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
@@ -85,12 +93,28 @@ export default function AddPropagation({ userId, onSaved, onCancel }: Props) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-stone-700 mb-1">Parent plant <span className="text-red-400">*</span></label>
+            <label className="block text-sm font-medium text-stone-700 mb-1">Parent plant</label>
             <select value={plantId} onChange={(e) => setPlantId(e.target.value)}
               className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400">
               {plants.map(p => <option key={p.id} value={p.id}>{p.nickname ?? p.species}</option>)}
+              <option value={OTHER}>Other (not in my collection)</option>
             </select>
           </div>
+
+          {isOther && (
+            <div>
+              <label className="block text-sm font-medium text-stone-700 mb-1">
+                Species <span className="text-red-400">*</span>
+              </label>
+              <input
+                value={sourceSpecies}
+                onChange={(e) => setSourceSpecies(e.target.value)}
+                placeholder="e.g. Acer palmatum"
+                required
+                className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
+              />
+            </div>
+          )}
 
           <div>
             <label className="block text-sm font-medium text-stone-700 mb-1">Method</label>
@@ -123,7 +147,7 @@ export default function AddPropagation({ userId, onSaved, onCancel }: Props) {
               className="flex-1 border border-stone-200 text-stone-600 py-2 rounded-lg text-sm hover:bg-stone-50 transition-colors">
               Cancel
             </button>
-            <button type="submit" disabled={saving || uploading || !plantId}
+            <button type="submit" disabled={saving || uploading || !canSubmit}
               className="flex-1 bg-purple-600 hover:bg-purple-700 text-white py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50">
               {saving ? 'Saving...' : 'Add propagation'}
             </button>
