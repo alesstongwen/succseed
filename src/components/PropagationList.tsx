@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { differenceInDays } from 'date-fns';
+import { differenceInCalendarDays } from 'date-fns';
 import { supabase } from '../lib/supabaseClient';
 import type { Propagation, PropagationStage } from '../types/plant';
 import AddPropagation from './AddPropagation';
@@ -101,7 +101,7 @@ export default function PropagationList({ userId }: Props) {
 
 function PropagationCard({ prop, onClick }: { prop: Propagation; onClick: () => void }) {
   const plantName = prop.plants?.nickname ?? prop.plants?.species ?? prop.source_species ?? 'Unknown plant';
-  const daysSince = differenceInDays(new Date(), new Date(prop.date_taken));
+  const daysSince = differenceInCalendarDays(new Date(), new Date(prop.date_taken));
   const stageIdx = STAGE_ORDER.indexOf(prop.current_stage);
 
   return (

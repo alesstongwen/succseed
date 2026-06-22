@@ -1,4 +1,4 @@
-import { formatDistanceToNow, differenceInDays } from 'date-fns';
+import { formatDistanceToNow, differenceInCalendarDays } from 'date-fns';
 import type { Plant, WateringLog } from '../types/plant';
 
 type Props = {
@@ -12,7 +12,7 @@ function wateringStatus(plant: Plant, lastWatering?: WateringLog): { gradient: s
 
   if (!lastWatering) return { gradient: 'from-stone-100 to-stone-200', label: 'No watering recorded', overdue: false };
 
-  const daysSince = differenceInDays(new Date(), new Date(lastWatering.watered_at));
+  const daysSince = differenceInCalendarDays(new Date(), new Date(lastWatering.watered_at));
 
   if (interval) {
     const daysUntil = interval - daysSince;

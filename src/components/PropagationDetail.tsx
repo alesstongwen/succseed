@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { format, differenceInDays } from 'date-fns';
+import { format, differenceInCalendarDays } from 'date-fns';
 import { supabase } from '../lib/supabaseClient';
 import type { Propagation, PropagationUpdate, PropagationStage } from '../types/plant';
 import AddPropagation from './AddPropagation';
@@ -152,7 +152,7 @@ export default function PropagationDetail({ propagationId, userId, onBack }: Pro
   if (!prop) return <div className="p-6 text-center text-stone-500">Not found. <button onClick={onBack} className="text-purple-600 underline">Back</button></div>;
 
   const plantName = prop.plants?.nickname ?? prop.plants?.species ?? prop.source_species ?? 'Unknown';
-  const daysSince = differenceInDays(new Date(), new Date(prop.date_taken));
+  const daysSince = differenceInCalendarDays(new Date(), new Date(prop.date_taken));
 
   return (
     <div className="min-h-screen bg-stone-50 pb-24">
