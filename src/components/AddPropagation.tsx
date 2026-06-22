@@ -38,8 +38,8 @@ export default function AddPropagation({ userId, propagation, onSaved, onCancel 
         const list = (data ?? []).map((r: any) => r.plants).filter(Boolean) as Plant[];
         setPlants(list);
         if (!isEdit) {
-          if (list.length > 0 && !propagation?.plant_id) setPlantId(list[0].id);
-          else if (list.length === 0) setPlantId(OTHER);
+          if (list.length > 0) setPlantId(list[0].id);
+          else setPlantId(OTHER);
         }
       });
   }, [userId]);
