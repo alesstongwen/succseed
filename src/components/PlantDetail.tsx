@@ -32,6 +32,7 @@ export default function PlantDetail({ plantId, userId, onBack, onDeleted }: Prop
   // Quick-log state
   const [waterNote, setWaterNote] = useState('');
   const [waterIntensity, setWaterIntensity] = useState<'misting' | 'light' | 'normal' | 'soaked'>('normal');
+  const [waterTimeOfDay, setWaterTimeOfDay] = useState<'morning' | 'afternoon' | 'evening'>('morning');
   const [waterDate, setWaterDate] = useState(todayStr);
   const [fertNote, setFertNote] = useState('');
   const [fertName, setFertName] = useState('');
@@ -107,6 +108,8 @@ export default function PlantDetail({ plantId, userId, onBack, onDeleted }: Prop
 
   const intensityToMl = { misting: 50, light: 150, normal: 300, soaked: 500 };
 
+  const timeOfDayHour = { morning: '08:00:00', afternoon: '14:00:00', evening: '19:00:00' };
+
   async function logWatering() {
     setLogSaving(true);
     await supabase.from('watering_logs').insert({
@@ -114,10 +117,11 @@ export default function PlantDetail({ plantId, userId, onBack, onDeleted }: Prop
       watered_by: userId,
       notes: waterNote.trim() || null,
       amount_ml: intensityToMl[waterIntensity],
-      watered_at: new Date(waterDate + 'T12:00:00').toISOString(),
+      watered_at: new Date(waterDate + 'T' + timeOfDayHour[waterTimeOfDay]).toISOString(),
     });
     setWaterNote('');
     setWaterIntensity('normal');
+    setWaterTimeOfDay('morning');
     setWaterDate(todayStr);
     await loadLogs();
     setLogSaving(false);
@@ -355,6 +359,25 @@ export default function PlantDetail({ plantId, userId, onBack, onDeleted }: Prop
                 {waterIntensity === 'normal' && 'Regular watering — ~300ml'}
                 {waterIntensity === 'soaked' && 'Thorough soak — ~500ml'}
               </p>
+              <div>
+                <label className="block text-xs text-stone-400 mb-1">Time of day</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {(['morning', 'afternoon', 'evening'] as const).map((t) => (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => setWaterTimeOfDay(t)}
+                      className={`py-2 rounded-lg text-xs font-medium capitalize border transition-colors ${
+                        waterTimeOfDay === t
+                          ? 'bg-blue-500 text-white border-blue-500'
+                          : 'bg-white text-stone-500 border-stone-200 hover:border-blue-300'
+                      }`}
+                    >
+                      {t === 'morning' ? '🌅 Morning' : t === 'afternoon' ? '☀️ Afternoon' : '🌙 Evening'}
+                    </button>
+                  ))}
+                </div>
+              </div>
               <textarea
                 placeholder="Notes (optional)"
                 value={waterNote}
@@ -390,6 +413,9 @@ export default function PlantDetail({ plantId, userId, onBack, onDeleted }: Prop
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-stone-700">
                       {format(new Date(log.watered_at), 'MMM d, yyyy')}
+                      <span className="text-xs font-normal text-stone-400 ml-1.5">
+                        {(() => { const h = new Date(log.watered_at).getHours(); return h < 12 ? '🌅 morning' : h < 17 ? '☀️ afternoon' : '🌙 evening'; })()}
+                      </span>
                     </span>
                     <div className="flex items-center gap-2">
                       {log.amount_ml && (
