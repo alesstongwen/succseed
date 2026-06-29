@@ -120,7 +120,7 @@ export default function AddPropagation({ userId, propagation, onSaved, onCancel 
           <div>
             <label className="block text-sm font-medium text-stone-700 mb-1">Parent plant</label>
             <select value={plantId ?? OTHER} onChange={(e) => setPlantId(e.target.value)}
-              className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400">
+              className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 appearance-none">
               {plants.map(p => <option key={p.id} value={p.id}>{p.nickname ?? p.species}</option>)}
               <option value={OTHER}>Other (not in my collection)</option>
             </select>
@@ -136,7 +136,7 @@ export default function AddPropagation({ userId, propagation, onSaved, onCancel 
                 onChange={(e) => setSourceSpecies(e.target.value)}
                 placeholder="e.g. Acer palmatum"
                 required
-                className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
+                className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 appearance-none"
               />
             </div>
           )}
@@ -156,7 +156,7 @@ export default function AddPropagation({ userId, propagation, onSaved, onCancel 
           <div>
             <label className="block text-sm font-medium text-stone-700 mb-1">Date taken</label>
             <input type="date" value={dateTaken} onChange={(e) => setDateTaken(e.target.value)}
-              className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400" />
+              className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 appearance-none" />
           </div>
 
           <div>
