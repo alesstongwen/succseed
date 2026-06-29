@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { differenceInCalendarDays } from 'date-fns';
 import { supabase } from '../lib/supabaseClient';
 import type { Plant, WateringLog } from '../types/plant';
 import PlantCard from './PlantCard';
@@ -93,6 +94,20 @@ export default function PlantList({ userId, userName, onSignOut }: Props) {
 
   const greeting = userName ? `Hi, ${userName.split(' ')[0]}!` : 'Your plants';
 
+  function urgencyScore(plant: Plant): number {
+    const log = lastWaterings[plant.id];
+    if (!log) return 0; // never watered — neutral, sits at bottom
+    const daysSince = differenceInCalendarDays(new Date(), new Date(log.watered_at));
+    if (plant.watering_interval_days) {
+      // negative = overdue (more negative = more urgent), positive = days remaining
+      return plant.watering_interval_days - daysSince;
+    }
+    // No interval: sort by days since (more days = more urgent = lower score)
+    return daysSince * -1;
+  }
+
+  const sortedPlants = [...plants].sort((a, b) => urgencyScore(a) - urgencyScore(b));
+
   return (
     <div className="min-h-screen bg-stone-50">
       {/* Header */}
@@ -125,7 +140,7 @@ export default function PlantList({ userId, userName, onSignOut }: Props) {
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-3">
-            {plants.map((plant) => (
+            {sortedPlants.map((plant) => (
               <PlantCard
                 key={plant.id}
                 plant={plant}
