@@ -18,13 +18,11 @@ function wateringStatus(plant: Plant, lastWatering?: WateringLog): { gradient: s
     const daysUntil = interval - daysSince;
     if (daysUntil < 0) return { gradient: 'from-red-100 to-red-200', label: `Overdue by ${Math.abs(daysUntil)}d`, overdue: true };
     if (daysUntil === 0) return { gradient: 'from-orange-100 to-orange-200', label: 'Water today!', overdue: true };
-    if (daysUntil <= 2) return { gradient: 'from-yellow-100 to-yellow-200', label: `Water in ${daysUntil}d`, overdue: false };
     return { gradient: 'from-leaf-100 to-leaf-200', label: `Water in ${daysUntil}d`, overdue: false };
   }
 
   // No interval set — fall back to generic health colour
-  if (daysSince <= 7) return { gradient: 'from-leaf-100 to-leaf-200', label: `Watered ${formatDistanceToNow(new Date(lastWatering.watered_at), { addSuffix: true })}`, overdue: false };
-  if (daysSince <= 14) return { gradient: 'from-yellow-100 to-yellow-200', label: `Watered ${formatDistanceToNow(new Date(lastWatering.watered_at), { addSuffix: true })}`, overdue: false };
+  if (daysSince <= 14) return { gradient: 'from-leaf-100 to-leaf-200', label: `Watered ${formatDistanceToNow(new Date(lastWatering.watered_at), { addSuffix: true })}`, overdue: false };
   return { gradient: 'from-red-100 to-red-200', label: `Watered ${formatDistanceToNow(new Date(lastWatering.watered_at), { addSuffix: true })}`, overdue: false };
 }
 
