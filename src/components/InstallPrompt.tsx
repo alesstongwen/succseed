@@ -7,7 +7,8 @@ export default function InstallPrompt() {
 
   useEffect(() => {
     if (window.matchMedia('(display-mode: standalone)').matches) return;
-    if (localStorage.getItem('pwa-dismissed') === '1') return;
+    const dismissed = localStorage.getItem('pwa-dismissed');
+    if (dismissed && Date.now() - Number(dismissed) < 7 * 24 * 60 * 60 * 1000) return;
 
     const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) && !(window as any).MSStream;
     const isSafari = /safari/i.test(navigator.userAgent) && !/crios|fxios|chrome/i.test(navigator.userAgent);
@@ -28,7 +29,7 @@ export default function InstallPrompt() {
   }, []);
 
   function dismiss() {
-    localStorage.setItem('pwa-dismissed', '1');
+    localStorage.setItem('pwa-dismissed', String(Date.now()));
     setShow(false);
   }
 
