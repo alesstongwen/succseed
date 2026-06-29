@@ -392,7 +392,7 @@ export default function PlantDetail({ plantId, userId, onBack, onDeleted }: Prop
                   value={waterDate}
                   max={todayStr}
                   onChange={(e) => setWaterDate(e.target.value)}
-                  className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-leaf-400"
+                  className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-leaf-400 appearance-none"
                 />
               </div>
               <button
@@ -445,14 +445,14 @@ export default function PlantDetail({ plantId, userId, onBack, onDeleted }: Prop
                 placeholder="Fertilizer name (optional)"
                 value={fertName}
                 onChange={(e) => setFertName(e.target.value)}
-                className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-leaf-400"
+                className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-leaf-400 appearance-none"
               />
               <input
                 type="number"
                 placeholder="Amount in ml (optional)"
                 value={fertAmount}
                 onChange={(e) => setFertAmount(e.target.value)}
-                className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-leaf-400"
+                className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-leaf-400 appearance-none"
               />
               <textarea
                 placeholder="Notes (optional)"
@@ -468,7 +468,7 @@ export default function PlantDetail({ plantId, userId, onBack, onDeleted }: Prop
                   value={fertDate}
                   max={todayStr}
                   onChange={(e) => setFertDate(e.target.value)}
-                  className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-leaf-400"
+                  className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-leaf-400 appearance-none"
                 />
               </div>
               <button
@@ -530,7 +530,7 @@ export default function PlantDetail({ plantId, userId, onBack, onDeleted }: Prop
               <select
                 value={careType}
                 onChange={(e) => setCareType(e.target.value)}
-                className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-leaf-400"
+                className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-leaf-400 appearance-none"
               >
                 {CARE_TYPES.map((t) => (
                   <option key={t} value={t}>{t}</option>
@@ -550,7 +550,7 @@ export default function PlantDetail({ plantId, userId, onBack, onDeleted }: Prop
                   value={careDate}
                   max={todayStr}
                   onChange={(e) => setCareDate(e.target.value)}
-                  className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-leaf-400"
+                  className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-leaf-400 appearance-none"
                 />
               </div>
               <button
